@@ -1,0 +1,118 @@
+<html>
+<head>
+
+<link rel="stylesheet" content="text/css" href="{{ STATIC_URL }}style.css" >
+<script src="/static/d3.v3.min.js"></script>
+<script>
+var data = new Array();
+        function filter_eid(plotnm, eid) {
+        // select all circle children of plotid
+        // filter on eid
+        plotid = "#" + plotnm;
+        plot = d3.select(plotid);
+        filtered = plot.selectAll('circle').filter(function(d) {
+            return eid == d.eid;
+            });
+        return filtered;
+        }
+        
+
+        function plotpoint(newdp, plotnm, classname, size) {
+            plotid = "#" + plotnm;
+            plot = d3.select(plotid);
+            svg = plot.select('svg');
+            alldata = data[plotnm].concat(dp)
+            circle = svg.selectAll("circle").data(alldata);
+            enter = circle.enter().append("circle");
+            enter.attr("cx", function(d) { return x(d.x); })
+                .attr("cy", function(d) { return height - y(d.y);})
+                .attr("class", classname).attr("r", size)
+                .attr("id", function(d) { return d.eid+plotid; });
+            return enter;
+        }
+
+        function get_datapoints_obj(dataset, eid) {
+            dp = dataset.filter(function(d) {
+               return d.eid == eid;
+            });
+            return dp;
+        }
+            
+        highlight_point = function(plotid, eid) {
+            // remove small dots, replace with big dots
+            toremove = filter_eid(plotid, eid);
+            dp = get_datapoints_obj(data[plotid], eid);
+            points = plotpoint(dp, plotid, "highlightpoints", 5);
+            points.attr("onmouseout", "mouseOut(evt)");
+            toremove.remove();
+        }
+
+
+</script>
+</head>
+<body>
+
+{% block topheader %}
+<div id="topheader">
+{% if not user.is_loggedin %}
+<a href="/login/?next=/graph/1/">LOGIN</a>
+{% else %}
+
+<div id="loggedintext">
+Logged in as {{ user.alias }}
+</div>
+
+<a href="/">HOME</a>
+<div class="dotspacer">&middot;</div>
+<a href="/races">DINA TÄVLINGAR</a>
+<div class="dotspacer">&middot;</div>
+<a href="/about">OM ORIENTALYST</a>
+<div class="dotspacer">&middot;</div>
+<a href="/logout">LOGOUT</a>
+{% endif %}
+</div>
+{% endblock topheader %}
+
+<div id="titlebar">
+<img id="logo" src="{{STATIC_URL}}logo.svg">
+<div id="logotext">orientalyst</div>
+</div>
+
+<div id="content">
+<div id="sidemenu" class="column">
+
+<div id="sidemenucontent">Senaste tävlingar<br>
+{% if racelist %}
+{% for id,race in racelist %}
+<a href="/graph/{{ id }}">{{ race }}</a> <br>
+{% endfor %}
+{% endif %}
+</div>
+</div>
+
+{% if plots.showgraphs %}
+<div id="centergraphs" class="column">
+
+<div class="graphcolumn">
+{{ plots.plots.splits.render_html|safe}}
+{{ plots.plots.bomsplits.render_html|safe}}
+{{ plots.plots.behind.render_html|safe}}
+{{ plots.plots.legbehind.render_html|safe}}
+</div>
+<div class="graphcolumn">
+{{ plots.plots.bomtotal.render_html|safe}}
+{{ plots.plots.spread.render_html|safe}}
+</div>
+</div>
+{% else %}
+No splits found for this race
+{% endif %}
+
+
+</div>
+
+<div id="footer">
+ANd a footer</div>
+
+</body>
+</html>

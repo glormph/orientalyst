@@ -1,0 +1,138 @@
+@import url(http://fonts.googleapis.com/css?family=Gudea:400,700);
+@import url(http://fonts.googleapis.com/css?family=Inder);
+
+html {
+width: 100%;
+padding: 0px;
+margin: 0px;
+}
+
+body {
+width: 100%;
+padding: 0px;
+margin: 0px;
+min-width: 1050px;
+background-color: #fbf9df;
+}
+
+div#topheader {
+width: 100%;
+background-color: #002b00;
+height:25px;
+position: fixed;
+color: white;
+text-align: center;
+font-family: Helvetica, Arial, sans-serif;
+font-size: 16px;
+font-weight: bold;
+}
+
+div#titlebar {
+width: 100%;
+background-image: url('./titlebg.png');
+background-repeat: repeat;
+height:100px;
+padding-top: 50px;
+padding-left: 100px;
+margin-bottom: 30px;
+}
+
+#content {
+padding-left: 250px;
+padding-right: 350px;
+}
+
+#content .column {
+float: left;
+}
+
+div#centergraphs {
+
+width 100%;
+background-color: red;
+}
+
+div#sidemenu {
+width: 250px;
+
+background-image: url('./sidemenubg.png');
+background-repeat: repeat;
+padding: 10px;
+color: white;
+text-align: left;
+font-family: Arial, Helvetica, sans-serif;
+font-size: 20px;
+}
+
+
+div#rightgraphs {
+width: 150px;
+}
+
+div#footer {
+clear: both;
+}
+
+div.graph {
+margin: 20px;
+border-color: black;
+border-style: solid;
+}
+
+
+div#logotext {
+color: #1a1a1a;
+text-align: left;
+font-family: 'Inder', 'Helvetica', 'Arial', sans-serif;
+font-size: 50px;
+font-weight: bold;
+}
+
+img#logo {
+display: block;
+float: left;
+margin-right: 50px;
+padding: 0;
+height: 75px;
+}
+
+.axis path, .axis line {
+fill: none;
+stroke: #000;
+shape-rendering: crispEdges;
+}
+
+.dot {
+stroke: #000;
+}
+
+svg {
+width: 350;
+height: 200;
+background-color: white;
+}
+
+.smallpoints {
+fill: grey;
+fill-opacity: 0.8;
+stroke-width: 1px;
+stroke:grey;
+stroke-opacity: 0.5;
+}
+
+.highlightpoints {
+fill: red;
+fill-opacity: 0.8;
+stroke-width: 1px;
+stroke:grey;
+stroke-opacity: 0.5;
+}
+
+text {
+font-family: Arial;
+font-size: 12px;
+}
+
+text.xTickNos {
+text-align: center;
+}
