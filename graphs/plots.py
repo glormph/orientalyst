@@ -2,6 +2,13 @@ import classracedata
 
 class PlotSet(object):
     def __init__(self, results, eventor_ids):
+        if results.event.name == results.name:
+            self.name = results.name
+        else:
+            self.name = '{0} - {1}'.format(results.event.name.encode('utf-8'),
+                    results.name.encode('utf-8'))
+        self.classname = results.classname
+        self.date = results.startdate
         
         racedata = classracedata.ClassRaceData(results)
         if not racedata.hassplits:

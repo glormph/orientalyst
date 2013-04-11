@@ -84,14 +84,28 @@ Logged in as {{ user.alias }}
 <div id="sidemenucontent">Senaste tävlingar<br>
 {% if racelist %}
 {% for id,race in racelist %}
-<a href="/graph/{{ id }}">{{ race }}</a> <br>
+<a href="/race/{{ id }}">{{ race }}</a> <br>
 {% endfor %}
 {% endif %}
 </div>
 </div>
 
 {% if plots.showgraphs %}
+
+
 <div id="centergraphs" class="column">
+
+<div id="results">
+<div id="resultstitle">
+{{ plots.name }} - {{ plots.classname }} - {{ plots.date }}
+</div>
+<div id="resultscontent">
+Placering: {{ result.position }}<br>
+Tid: {{ result.time }}<br>
+Status: {{ result.status }}<br>
+Tidsskillnad: {{ result.diff }}<br>
+</div>
+</div>
 
 <div class="graphcolumn">
 {{ plots.plots.splits.render_html|safe}}

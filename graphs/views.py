@@ -1,8 +1,7 @@
 from django.http import HttpResponse
 from graphs.models import PersonRun, Classrace, Result, Split, Person
 from django.shortcuts import get_object_or_404, get_list_or_404, render
-from graphs import plots, userchecker
-
+from graphs import plots, userchecker, races
 
 def home(request):
     """Just show list of classraces -- how many?- and welcome message/news. 
@@ -15,43 +14,45 @@ def home(request):
     
     return HttpResponse(output)
 
+def userraces(request):
+    pass 
+
 def race(request, race_id):
     """"Show results for a single race"""
     # first check if user has run this race or if race exists
     user = userchecker.User(request.user)
+    racelist = races.RaceList(user)
+
     if not user.is_loggedin():
-        plothtml = False
-        racelist = False
+        plotset = False
+        latestraces = False
     elif user.has_race(race_id):
         # get results
         # FIXME which fields need to go to graphing? times, pos, names, clubs?
         cr = Classrace.objects.get(pk=race_id)
+        results = Result.objects.get(classrace=cr.id,
+        person_eventor_id=user.get_eventorID() )
 
         # get picked graphs, put results in there, or background parse all possible
         # graphs and let user pick, just show some prioritized in the meantime
-        plothtml = plots.PlotSet(cr, [user.get_eventorID()] )
+        plotset = plots.PlotSet(cr, [user.get_eventorID()] )
     
         # best would be to only pass results from here once -> let graph module do
         # magic. This would go bad with the one graph - one class thingie though
 
         # which graphs?
 
-        # get last x races of a competitor
-        racelist = PersonRun.objects.all().\
-            filter(person=user.get_competitorID()).order_by('classrace__startdate') #FIXME get person.id fr auth
-        racelist = [(x.classrace.id, x.classrace.name) for x in racelist]
+        # get last 10 races of a competitor
+        latestraces = racelist.get_latest_races(10)
     else:
-        plothtml = False
+        plotset = False
         # FIXME next stuff is also in other if clause. abstract it into
         # competitor or something.
-        racelist = PersonRun.objects.all().\
-            filter(person=user.get_competitorID()).order_by('classrace__startdate') #FIXME get person.id fr auth
-        
-        racelist = [(x.classrace.id, x.classrace.name) for x in racelist]
+        latestraces = racelist.get_latest_races(10)
 
     # graphs to template
-    return render(request, 'graphs/index.html', {'plots' : plothtml,
-            'racelist': racelist, 'user': user})
+    return render(request, 'graphs/index.html', {'plots' : plotset, 'result':
+        results, 'racelist': latestraces, 'user': user})
 
 
 def multirace(request, race_ids):
