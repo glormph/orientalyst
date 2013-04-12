@@ -15,7 +15,13 @@ def home(request):
     return HttpResponse(output)
 
 def userraces(request):
-    pass 
+    # get all user races
+    user = userchecker.User(request.user)
+    racelist = races.RaceList(user)
+    
+    # display them in template with nice formatting and date
+    return render(request, 'graphs/userraces.html', {'racelist': racelist, 'user': user})
+
 
 def race(request, race_id):
     """"Show results for a single race"""

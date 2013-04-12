@@ -1,0 +1,49 @@
+<html>
+<head>
+<link rel="stylesheet" content="text/css" href="{{ STATIC_URL }}style.css" >
+</head>
+<body>
+
+{% block topheader %}
+<div id="topheader">
+{% if not user.is_loggedin %}
+<a href="/login/?next=/graph/1/">LOGIN</a>
+{% else %}
+
+<div id="loggedintext">
+Logged in as {{ user.alias }}
+</div>
+
+<a href="/">HOME</a>
+<div class="dotspacer">&middot;</div>
+<a href="/races">DINA TÄVLINGAR</a>
+<div class="dotspacer">&middot;</div>
+<a href="/about">OM ORIENTALYST</a>
+<div class="dotspacer">&middot;</div>
+<a href="/logout">LOGOUT</a>
+{% endif %}
+</div>
+{% endblock topheader %}
+
+<div id="titlebar">
+<img id="logo" src="{{STATIC_URL}}logo.svg">
+<div id="logotext">orientalyst</div>
+</div>
+
+<div id="content">
+
+{% for year in racelist.get_all_races_by_year %}
+<h2>{{ year }}</h2>
+<!-- template tag here to look up in dict by var, something like: 
+{% for race in racelist|lookup:year %}
+{{ race.name }}, {{ race.date }}, {{ race.classname }}
+{% endfor %}
+-->
+{% endfor %}
+</div>
+
+<div id="footer">
+ANd a footer</div>
+
+</body>
+</html>

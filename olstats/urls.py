@@ -13,7 +13,8 @@ urlpatterns = patterns('',
 urlpatterns += patterns('graphs.views',
         url(r'^$', 'home'),
         url(r'^race/(?P<race_id>\d+)/$', 'race'),
-        url(r'^userraces/$', 'userraces'),
+        url(r'^races/', 'userraces'),
+        url(r'^about/', 'about'),
 
         #url(r'^graph/(?P<race_ids>(?:\d+/)+)integrate', 'multirace'), # FIXME how to pass list?
         #url(r'^graph/dates/(?P<fromdate>\d+)/(?P<todate>\d+)/$', 'period'),
