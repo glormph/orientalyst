@@ -83,8 +83,8 @@ Logged in as {{ user.alias }}
 
 <div id="sidemenucontent">Senaste tävlingar<br>
 {% if racelist %}
-{% for id,race in racelist %}
-<a href="/race/{{ id }}">{{ race }}</a> <br>
+{% for race in racelist %}
+<a href="/race/{{ race.crid }}">{{ race.name }}</a> <br>
 {% endfor %}
 {% endif %}
 </div>
