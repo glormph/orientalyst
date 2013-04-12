@@ -1,25 +1,21 @@
-import classracedata
+import classracedata, races
+from graphs.models import Result
 
 class PlotSet(object):
-    def __init__(self, results, eventor_ids):
-        if results.event.name == results.name:
-            self.name = results.name
-        else:
-            self.name = '{0} - {1}'.format(results.event.name.encode('utf-8'),
-                    results.name.encode('utf-8'))
-        self.classname = results.classname
-        self.date = results.startdate
-        
-        racedata = classracedata.ClassRaceData(results)
+    def __init__(self, classrace, eventor_id):
+        self.results = Result.objects.get(classrace=classrace.id,
+                person_eventor_id=eventor_id)
+        self.raceinfo = races.Race(classrace)
+
+        racedata = classracedata.ClassRaceData(classrace)
         if not racedata.hassplits:
             self.showgraphs = False
             return 
         else:
             self.showgraphs = True
         self.plots = {}
-        self.show_eids = eventor_ids # for testing, sofia anderssons
+        self.show_eids = eventor_id # for testing, sofia anderssons
                                         #eventorID=2664
-        
 
         self.plots['splits'] = MultiplePointsPerPersonPlot('splits',
                             racedata.data, self.show_eids, 'splits', 'time')

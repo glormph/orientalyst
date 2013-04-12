@@ -18,7 +18,6 @@ def userraces(request):
     # get all user races
     user = userchecker.User(request.user)
     racelist = races.RaceList(user)
-    
     # display them in template with nice formatting and date
     return render(request, 'graphs/userraces.html', {'racelist': racelist, 'user': user})
 
@@ -36,12 +35,10 @@ def race(request, race_id):
         # get results
         # FIXME which fields need to go to graphing? times, pos, names, clubs?
         cr = Classrace.objects.get(pk=race_id)
-        results = Result.objects.get(classrace=cr.id,
-        person_eventor_id=user.get_eventorID() )
 
         # get picked graphs, put results in there, or background parse all possible
         # graphs and let user pick, just show some prioritized in the meantime
-        plotset = plots.PlotSet(cr, [user.get_eventorID()] )
+        plotset = plots.PlotSet(cr, user.get_eventorID() )
     
         # best would be to only pass results from here once -> let graph module do
         # magic. This would go bad with the one graph - one class thingie though
@@ -57,8 +54,8 @@ def race(request, race_id):
         latestraces = racelist.get_latest_races(10)
 
     # graphs to template
-    return render(request, 'graphs/index.html', {'plots' : plotset, 'result':
-        results, 'racelist': latestraces, 'user': user})
+    return render(request, 'graphs/index.html', {'plots' : plotset,
+            'racelist': latestraces, 'user': user})
 
 
 def multirace(request, race_ids):

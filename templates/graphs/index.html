@@ -97,14 +97,14 @@ Logged in as {{ user.alias }}
 
 <div id="results">
 <div id="resultstitle">
-{{ plots.name }} - {{ plots.classname }} - {{ plots.date }}
+{{ plots.raceinfo.name }} - {{ plots.raceinfo.classname }} - {{ plots.raceinfo.date }}
 </div>
 
 <div id="resultscontent">
-Placering: {{ result.position }}<br>
-Tid: {{ result.time }}<br>
-Status: {{ result.status }}<br>
-Tidsskillnad: {{ result.diff }}<br>
+Placering: {{ plots.results.position }}<br>
+Tid: {{ plots.results.time }}<br>
+Status: {{ plots.results.status }}<br>
+Tidsskillnad: {{ plots.results.diff }}<br>
 </div>
 </div>
 
