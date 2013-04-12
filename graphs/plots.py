@@ -16,19 +16,21 @@ class PlotSet(object):
         self.plots = {}
         self.show_eids = eventor_id # for testing, sofia anderssons
                                         #eventorID=2664
+    
+         ##def __init__(self, name, racedata, eid, ydata, ylab, xlab=None,
+        ##def __init__(self, name, racedata, eid, y, x, ylab, xlab, y_units='time'):
 
-        self.plots['splits'] = MultiplePointsPerPersonPlot('splits',
-                            racedata.data, self.show_eids, 'splits', 'time')
+        self.plots['splits'] = MultiplePointsPerPersonPlot('splittider',
+                    racedata.data, self.show_eids, 'splits', 'tid', 'kontroll' )
         self.plots['bomsplits'] = MultiplePointsPerPersonPlot('bommar', 
-                racedata.data, self.show_eids, 'mistakes', 'time')
-        self.plots['behind'] = MultiplePointsPerPersonPlot('tidskillnad', 
-                racedata.data, self.show_eids, 'splitdiffs', 'time')
-        self.plots['legbehind'] = MultiplePointsPerPersonPlot('tidskillnad_leg', 
-                racedata.data, self.show_eids, 'legdiffs', 'time')
+                racedata.data, self.show_eids, 'mistakes', 'tid', 'kontroll')
+        self.plots['legbehind'] = MultiplePointsPerPersonPlot('tidskillnader',
+                racedata.data, self.show_eids, 'legdiffs', 'tid', 'kontroll')
         self.plots['spread'] = SingePointsPerPersonPlot('spread', racedata.data,
-                self.show_eids, 'spread', 'result')
+                self.show_eids, 'spread', 'result', 'procent', 'placering')
         self.plots['bomtotal'] = SingePointsPerPersonPlot('bomtotal', racedata.data,
-                self.show_eids, 'totalmistakes', 'result')
+                self.show_eids, 'totalmistakes', 'result', 'bomtid',
+                'placering')
 
 class BasePlot(object):
     def base_html(self):
@@ -42,7 +44,10 @@ var plotname = "%s";
 var svg = d3.select("#%s").append("svg:svg").attr("width", 350).attr("height",
 200);
 var highlight_eid = "%s";
-""" % (self.name, self.name, self.name,self.name, self.highlight)
+var xlab = "%s";
+var ylab = "%s";
+""" % (self.name, self.name, self.name,self.name, self.highlight, self.xlab,
+self.ylab)
     
     def render_data(self):
         return """data[plotname] = [ %s
@@ -105,7 +110,20 @@ yincrement)).enter().append("text").attr("x", padding-10).attr("y",
 function(datum){return height-y(datum);})
 .text(function(datum) {return datum;}).attr("fill", "black").attr("class",
 "xTickNos").attr("text-anchor", "end").attr("dy", 3);
+
 // axis labels
+axisGroup.append("text")
+    .attr("x", (padding + width-padding)/2)
+    .attr("y", height-padding/2)
+    .text(xlab).attr("fill", "black")
+    .attr("text-anchor", "middle");
+
+axisGroup.append("text")
+    .attr("x", padding/2)
+    .attr("y", height/2)
+    .text(ylab).attr("fill", "black")
+    .attr("text-anchor", "middle")
+    ;
 
 """
 
@@ -123,7 +141,7 @@ function(datum){return height-y(datum);})
         return '\n'.join(html)
 
 class SingePointsPerPersonPlot(BasePlot):
-    def __init__(self, name, racedata, eid, y, x):
+    def __init__(self, name, racedata, eid, y, x, ylab, xlab, y_units='time'):
         self.name = name
         self.points = []
         self.highlight = eid
@@ -131,15 +149,19 @@ class SingePointsPerPersonPlot(BasePlot):
             self.points.append('{name: "%s", x: %s, y: %s, color: "%s", eid: "%s"}' \
                 % (racedata[pid]['name'], racedata[pid][x], racedata[pid][y],
                 "grey", str(pid)))
-    
+        
+        self.xlab = xlab
+        self.ylab = ylab
 
 class MultiplePointsPerPersonPlot(BasePlot):
-    def __init__(self, name, racedata, eid, ydata, ylab, xlab=None):
+    def __init__(self, name, racedata, eid, ydata, ylab, xlab=None,
+            y_units='time'):
         self.highlight = eid
         self.name = name
         self.points = []
         points = {}
-         
+        self.xlab = xlab
+        self.ylab = ylab
         for pid in racedata:
             for n,spl in enumerate(racedata[pid][ydata]):
                 if not n in points:
