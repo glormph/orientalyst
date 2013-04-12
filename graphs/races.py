@@ -16,13 +16,13 @@ class RaceList(object):
         self.allraces = {}
         races = self.racelist.order_by('-classrace__startdate')
         for r in races:
-            if not r.classrace.startdate.year in outraces:
+            if not r.classrace.startdate.year in self.allraces:
                 self.allraces[ r.classrace.startdate.year ] = []
 
             self.allraces[ r.classrace.startdate.year ].append( Race(r.classrace) )
         
         # return year
-        return sorted(outraces.keys())
+        return sorted(self.allraces.keys())
         
 
 

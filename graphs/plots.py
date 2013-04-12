@@ -17,9 +17,6 @@ class PlotSet(object):
         self.show_eids = eventor_id # for testing, sofia anderssons
                                         #eventorID=2664
     
-         ##def __init__(self, name, racedata, eid, ydata, ylab, xlab=None,
-        ##def __init__(self, name, racedata, eid, y, x, ylab, xlab, y_units='time'):
-
         self.plots['splits'] = MultiplePointsPerPersonPlot('splittider',
                     racedata.data, self.show_eids, 'splits', 'tid', 'kontroll' )
         self.plots['bomsplits'] = MultiplePointsPerPersonPlot('bommar', 
