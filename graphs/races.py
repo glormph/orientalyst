@@ -22,7 +22,7 @@ class RaceList(object):
             self.allraces[ r.classrace.startdate.year ].append( Race(r.classrace) )
         
         # return year
-        return sorted(self.allraces.keys())
+        return sorted(self.allraces.keys())[::-1]
         
 
 

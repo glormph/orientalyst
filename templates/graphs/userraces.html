@@ -4,6 +4,8 @@
 </head>
 <body>
 
+{% load dictlookup %}
+
 {% block topheader %}
 <div id="topheader">
 {% if not user.is_loggedin %}
@@ -32,14 +34,24 @@ Logged in as {{ user.alias }}
 
 <div id="content">
 
+<div id="yearracecolumn">
+<div id="yearracetitle">ALLA TÄVLINGAR FÖR {{ user.fullname|upper }}</div>
+
 {% for year in racelist.get_all_races_by_year %}
-<h2>{{ year }}</h2>
-<!-- template tag here to look up in dict by var, something like: 
-{% for race in racelist|lookup:year %}
-{{ race.name }}, {{ race.date }}, {{ race.classname }}
+<div class="yearraces">
+<h2 class="year">{{ year }}</h2>
+
+{% for race in racelist.allraces|lookup:year %}
+<div class="line">
+<a class="yearrace" href="/race/{{ race.cr_id }}/">{{ race.name }}</a>, {{ race.date }}, {{ race.classname }}
+</div>
 {% endfor %}
--->
+
+</div>
+
 {% endfor %}
+</div>
+
 </div>
 
 <div id="footer">

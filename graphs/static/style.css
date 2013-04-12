@@ -42,6 +42,36 @@ background-repeat: repeat;
 #content {
 }
 
+div#yearracecolumn {
+margin-right: auto;
+margin-left: auto;
+width: 50%;
+font-family: Arial, Helvetica, sans-serif;
+}
+
+div#yearracetitle {
+text-align: center;
+}
+
+
+div.yearraces {
+margin-top: 20px;
+padding: 20px;
+border-radius: 15px;
+background-color: #6f8a91;
+color: white;
+}
+
+.yearraces .line {
+font-size: 13px;
+}
+
+a.yearrace {
+font-size: 20px;
+text-align: left;
+}
+
+
 #content .column {
 float: left;
 }
