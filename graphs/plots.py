@@ -109,17 +109,20 @@ function(datum){return height-y(datum);})
 "xTickNos").attr("text-anchor", "end").attr("dy", 3);
 
 // axis labels
+// x axis
 axisGroup.append("text")
     .attr("x", (padding + width-padding)/2)
     .attr("y", height-padding/2)
     .text(xlab).attr("fill", "black")
     .attr("text-anchor", "middle");
-
+// y axis
+rotation = "rotate(-90, 10" + ", "+ height/2 + ")";
 axisGroup.append("text")
-    .attr("x", padding/2)
+    .attr("x", 10)
     .attr("y", height/2)
     .text(ylab).attr("fill", "black")
     .attr("text-anchor", "middle")
+    .attr("transform", rotation)
     ;
 
 """
