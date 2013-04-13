@@ -1,3 +1,4 @@
+import math
 import classracedata, races
 from graphs.models import Result
 
@@ -24,7 +25,8 @@ class PlotSet(object):
         self.plots['legbehind'] = MultiplePointsPerPersonPlot('tidskillnader',
                 racedata.data, self.show_eids, 'legdiffs', 'tid', 'kontroll')
         self.plots['spread'] = SingePointsPerPersonPlot('spread', racedata.data,
-                self.show_eids, 'spread', 'result', 'procent', 'placering')
+                self.show_eids, 'spread', 'result', 'procent', 'placering',
+                'nottime')
         self.plots['bomtotal'] = SingePointsPerPersonPlot('bomtotal', racedata.data,
                 self.show_eids, 'totalmistakes', 'result', 'bomtid',
                 'placering')
@@ -133,12 +135,22 @@ axisGroup.append("text")
         """
 
     def render_html(self):
+        self.set_ytickmarks()
         html = [self.base_html()]
         html.append(self.render_data() )
         html.append(self.render_points() )
         html.append(self.render_plot() )
         html.append(self.close_html() )
         return '\n'.join(html)
+    
+    def set_ytickmarks(self):
+        if self.y_units == 'time':
+            yinc = int(self.ymax)/5 # 5 tickmarks
+            ticks = range(0, int(self.ymax), yinc)
+            ticks += [ticks[-1]+yinc]
+            ticks = [{'tick': x, 'mark': '%d:%02d' % (x/60, x%60)} for x in ticks]
+            print ticks
+
 
 class SingePointsPerPersonPlot(BasePlot):
     def __init__(self, name, racedata, eid, y, x, ylab, xlab, y_units='time'):
@@ -149,9 +161,12 @@ class SingePointsPerPersonPlot(BasePlot):
             self.points.append('{name: "%s", x: %s, y: %s, color: "%s", eid: "%s"}' \
                 % (racedata[pid]['name'], racedata[pid][x], racedata[pid][y],
                 "grey", str(pid)))
-        
+         
         self.xlab = xlab
         self.ylab = ylab
+        self.y_units = y_units
+        self.ymax = math.ceil(max([racedata[x][y] for x in racedata]))
+
 
 class MultiplePointsPerPersonPlot(BasePlot):
     def __init__(self, name, racedata, eid, ydata, ylab, xlab=None,
@@ -162,6 +177,7 @@ class MultiplePointsPerPersonPlot(BasePlot):
         points = {}
         self.xlab = xlab
         self.ylab = ylab
+        self.y_units = y_units
         for pid in racedata:
             for n,spl in enumerate(racedata[pid][ydata]):
                 if not n in points:
@@ -171,7 +187,7 @@ class MultiplePointsPerPersonPlot(BasePlot):
         
         xpoints = sorted(points.keys())
         self.points = [x for n in xpoints for x in points[n]]
-
+        self.ymax = math.ceil(max([racedata[x][ydata][1] for x in racedata]))
 
     def render_points(self):
         return """
