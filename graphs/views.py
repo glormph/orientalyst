@@ -14,6 +14,12 @@ def home(request):
     
     return HttpResponse(output)
 
+def about(request): 
+    pass
+
+def my_profile(request):
+    pass
+
 def userraces(request):
     # get all user races
     user = userchecker.User(request.user)
