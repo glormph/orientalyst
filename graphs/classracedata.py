@@ -11,7 +11,8 @@ class ClassRaceData(object):
                 result.firstname.encode('utf-8'),
                 result.lastname.encode('utf-8'))
             self.data[eid]['result'] = result.position
-            
+            ttime = result.time.split(':')
+            self.data[eid]['totaltime'] = int(ttime[0]) * 60 + int(ttime[1])
             splits = [x.splittime for x in Split.objects.filter(result = 
             result.id).order_by('split_n')]
             

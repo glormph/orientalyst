@@ -4,6 +4,7 @@
 <link rel="stylesheet" content="text/css" href="{{ STATIC_URL }}style.css" >
 <script src="/static/d3.v3.min.js"></script>
 <script>
+
 var data = new Array();
         function filter_eid(plotnm, eid) {
         // select all circle children of plotid
@@ -115,6 +116,7 @@ Tidsskillnad: {{ plots.results.diff }}<br>
 {{ plots.plots.legbehind.render_html|safe}}
 </div>
 <div class="graphcolumn">
+{{ plots.plots.totaltime.render_html|safe}}
 {{ plots.plots.bomtotal.render_html|safe}}
 {{ plots.plots.spread.render_html|safe}}
 </div>

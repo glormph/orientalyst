@@ -19,17 +19,20 @@ class PlotSet(object):
                                         #eventorID=2664
     
         self.plots['splits'] = MultiplePointsPerPersonPlot('splittider',
-                    racedata.data, self.show_eids, 'splits', None, 'tid', 'kontroll' )
+                    racedata.data, self.show_eids, 'splits', None, 'tid (min)', 'kontroll' )
         self.plots['bomsplits'] = MultiplePointsPerPersonPlot('bommar', 
-                racedata.data, self.show_eids, 'mistakes', None, 'tid', 'kontroll')
+                racedata.data, self.show_eids, 'mistakes', None, 'tid (min)', 'kontroll')
         self.plots['legbehind'] = MultiplePointsPerPersonPlot('tidskillnader',
-                racedata.data, self.show_eids, 'legdiffs', None, 'tid', 'kontroll')
+                racedata.data, self.show_eids, 'legdiffs', None, 'tid (min)', 'kontroll')
         self.plots['spread'] = SingePointsPerPersonPlot('spread', racedata.data,
                 self.show_eids, 'spread', 'result', 'std.avvik. tidskillnad(%)', 'placering',
                 'nottime')
         self.plots['bomtotal'] = SingePointsPerPersonPlot('bomtotal', racedata.data,
-                self.show_eids, 'totalmistakes', 'result', 'bomtid',
+                self.show_eids, 'totalmistakes', 'result', 'tid (min)',
                 'placering')
+        self.plots['totaltime'] = SingePointsPerPersonPlot('totaltid', racedata.data,
+                self.show_eids, 'totaltime', 'result', 'tid (min)', 'placering',
+                )
 
 class BasePlot(object):
     def __init__(self, name, racedata, eid, y, x=None, ylab=None, xlab=None,
@@ -120,7 +123,7 @@ axisGroup.selectAll(".yTicks")
 axisGroup.selectAll(".yTickNos")
     .data(ticks).enter()
     .append("text")
-    .attr("x", padding-10)
+    .attr("x", padding-7)
     .attr("y", function(d){return height-y(d.tick);})
     .text(function(d) {return d.mark;})
     .attr("fill", "black")
@@ -180,12 +183,9 @@ axisGroup.append("text")
             else: # show multiples of 10 seconds
                 rest = int(self.ymax) % 10
                 self.ymax = int(self.ymax) + (10-rest)
-            
-
         else:
             rest = self.ymax % 5
             self.ymax = int(self.ymax + (5 - rest))
-            
 
         yinc = self.ymax/5 # 5 tickmarks
         ticks = range(0, self.ymax, yinc)
@@ -201,7 +201,7 @@ class SingePointsPerPersonPlot(BasePlot):
         super(SingePointsPerPersonPlot, self).__init__( name, racedata, eid, y, x, ylab, xlab, y_units)
         for pid in racedata:
             self.points.append('{name: "%s", x: %s, y: %s, color: "%s", eid: "%s"}' \
-                % (racedata[pid]['name'], racedata[pid][x], racedata[pid][y],
+                % (racedata[pid]['name'].decode('utf-8'), racedata[pid][x], racedata[pid][y],
                 "grey", str(pid)))
          
         self.ymax = math.ceil(max([racedata[x][y] for x in racedata]))
