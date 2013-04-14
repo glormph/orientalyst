@@ -25,7 +25,7 @@ class PlotSet(object):
         self.plots['legbehind'] = MultiplePointsPerPersonPlot('tidskillnader',
                 racedata.data, self.show_eids, 'legdiffs', None, 'tid', 'kontroll')
         self.plots['spread'] = SingePointsPerPersonPlot('spread', racedata.data,
-                self.show_eids, 'spread', 'result', 'procent', 'placering',
+                self.show_eids, 'spread', 'result', 'std.avvik. tidskillnad(%)', 'placering',
                 'nottime')
         self.plots['bomtotal'] = SingePointsPerPersonPlot('bomtotal', racedata.data,
                 self.show_eids, 'totalmistakes', 'result', 'bomtid',
@@ -163,25 +163,38 @@ axisGroup.append("text")
     
     def set_ytickmarks(self):
         """Method to determine how tickmarks should be distributed"""
+
+        def tickformatter(ticks, y_units):
+            ticksout = {
+                'time' : [{'tick': x, 'mark': '%d:%02d' % (x/60, x%60)} for x in ticks],
+                'nottime' : [{'tick': x, 'mark': x } for x in ticks]
+                }
+            return ticksout[y_units]
+                
         if self.y_units == 'time': # time tickmarks with minutes
             ymax_minutes = int(self.ymax)/60
             if ymax_minutes > 3: # >3 minutes: show whole minutes on ticks
                 rest = ymax_minutes % 5
                 ymax_minutes += (5-rest)
-                self.ymax = ymax_minutes * 60
+                self.ymax = int(ymax_minutes * 60)
             else: # show multiples of 10 seconds
                 rest = int(self.ymax) % 10
                 self.ymax = int(self.ymax) + (10-rest)
             
-            yinc = int(self.ymax)/5 # 5 tickmarks
-            ticks = range(0, int(self.ymax), yinc)
-            ticks += [ticks[-1]+yinc]
-            ticks = [{'tick': x, 'mark': '%d:%02d' % (x/60, x%60)} for x in ticks]
-            ticks = """ticks = {0};""".format(ticks)
-            ticks = ticks.replace("\'tick\'", 'tick').replace('\'mark\'',
-                            'mark').replace('\'', '\"')
-            return ticks
 
+        else:
+            rest = self.ymax % 5
+            self.ymax = int(self.ymax + (5 - rest))
+            
+
+        yinc = self.ymax/5 # 5 tickmarks
+        ticks = range(0, self.ymax, yinc)
+        ticks += [ticks[-1]+yinc]
+        ticks = tickformatter(ticks, self.y_units)
+        ticks = """ticks = {0};""".format(ticks)
+        ticks = ticks.replace("\'tick\'", 'tick').replace('\'mark\'',
+                        'mark').replace('\'', '\"')
+        return ticks
 
 class SingePointsPerPersonPlot(BasePlot):
     def __init__(self, name, racedata, eid, y, x=None, ylab=None, xlab=None, y_units='time'):
