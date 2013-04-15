@@ -7,15 +7,21 @@ def home(request):
     """Just show list of classraces -- how many?- and welcome message/news. 
     Showing all races may be too much, but at least give an option to show more."""
     # get logged in user
-    user = 'x'
+    user = userchecker.User(request.user)
+    racelist = races.RaceList(user)
 
-    crlist = get_list_or_404(PersonRun, person=1) #FIXME get person.id fr auth 
-    output = '<br>'.join([x.classrace.name for x in crlist])
-    
-    return HttpResponse(output)
+    if not user.is_loggedin():
+        latestraces = False
+    else:
+        latestraces = racelist.get_latest_races(10)
+        
+    return render(request, 'graphs/home.html', {'user': user, 'racelist':
+    latestraces})
 
 def about(request): 
-    pass
+    user = userchecker.User(request.user)
+
+    return render(request, 'graphs/about.html', {'user': user})
 
 def my_profile(request):
     pass
@@ -60,7 +66,7 @@ def race(request, race_id):
         latestraces = racelist.get_latest_races(10)
 
     # graphs to template
-    return render(request, 'graphs/index.html', {'plots' : plotset,
+    return render(request, 'graphs/plots.html', {'plots' : plotset,
             'racelist': latestraces, 'user': user})
 
 

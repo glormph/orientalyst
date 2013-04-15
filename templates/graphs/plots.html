@@ -1,7 +1,6 @@
-<html>
-<head>
+{% extends "graphs/base.html" %}
 
-<link rel="stylesheet" content="text/css" href="{{ STATIC_URL }}style.css" >
+{% block content %}
 <script src="/static/d3.v3.min.js"></script>
 <script>
 
@@ -50,34 +49,6 @@ var data = new Array();
 
 
 </script>
-</head>
-<body>
-
-{% block topheader %}
-<div id="topheader">
-{% if not user.is_loggedin %}
-<a href="/login/?next=/graph/1/">LOGIN</a>
-{% else %}
-
-<div id="loggedintext">
-Logged in as {{ user.alias }}
-</div>
-
-<a href="/">HOME</a>
-<div class="dotspacer">&middot;</div>
-<a href="/races">DINA TÄVLINGAR</a>
-<div class="dotspacer">&middot;</div>
-<a href="/about">OM ORIENTALYST</a>
-<div class="dotspacer">&middot;</div>
-<a href="/logout">LOGOUT</a>
-{% endif %}
-</div>
-{% endblock topheader %}
-
-<div id="titlebar">
-<img id="logo" src="{{STATIC_URL}}logo.svg">
-<div id="logotext">orientalyst</div>
-</div>
 
 <div id="content">
 <div id="sidemenu" class="column">
@@ -92,7 +63,6 @@ Logged in as {{ user.alias }}
 </div>
 
 {% if plots.showgraphs %}
-
 
 <div id="centergraphs" class="column">
 
@@ -127,6 +97,7 @@ No splits found for this race
 
 
 </div>
+{% endblock content %}
 
 <div id="footer">
 ANd a footer</div>

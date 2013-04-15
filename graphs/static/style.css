@@ -78,6 +78,13 @@ float: left;
 
 div#results {
 margin: 20px;
+width: auto;
+}
+
+div#welcome {
+margin: 20px;
+width: 70%;
+float: left;
 }
 
 div#resultstitle {

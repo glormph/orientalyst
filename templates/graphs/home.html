@@ -1,0 +1,35 @@
+{% extends "graphs/base.html" %}
+
+
+{% block content %}
+
+<div id="content">
+<div id="sidemenu" class="column">
+
+<div id="sidemenucontent">Senaste tävlingar<br>
+{% if racelist %}
+{% for race in racelist %}
+<a href="/race/{{ race.cr_id }}">{{ race.name }}</a> <br>
+{% endfor %}
+{% endif %}
+</div>
+</div>
+
+
+<div id="centergraphs">
+
+<div id="welcome">
+
+<div id="resultstitle">
+Välkommen till Orientalyst!
+</div>
+<div id="resultscontent">
+<p>Här kan du gå igenom dina orienteringsresultat och titta på grafer som visar
+tävlingsresultat på olika sätt. Resultaterna laddas ned från eventor.se, vilket
+betyder att bara de resultat som finns där kan visas här.
+</p>
+</div>
+</div>
+</div>
+</div>
+{% endblock content %}
