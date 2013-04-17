@@ -2,12 +2,13 @@ from graphs.models import PersonRun, Person #, Classrace, Result, Split, Person
 
 class User(object):
     def __init__(self, user):
-        self.fullname = '{0} {1}'.format(
-            user.first_name.encode('utf-8'),
-            user.last_name.encode('utf-8'))
         self.user = user
-        self.alias = user.username
-        self.person = Person.objects.get(user=self.user.id)
+        if user.is_authenticated():
+            self.fullname = '{0} {1}'.format(
+                user.first_name.encode('utf-8'),
+                user.last_name.encode('utf-8'))
+            self.alias = user.username
+            self.person = Person.objects.get(user=self.user.id)
 
     def is_loggedin(self):
         return self.user.is_authenticated()

@@ -3,7 +3,8 @@ from graphs.models import PersonRun
 class RaceList(object):
     def __init__(self, user):
         self.user = user
-        self.racelist = \
+        if self.user.is_loggedin():
+            self.racelist = \
                 PersonRun.objects.all().filter(person=self.user.get_competitorID())
     
     def get_latest_races(self, amount):
