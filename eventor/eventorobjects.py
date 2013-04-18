@@ -37,9 +37,9 @@ class ClubMember(object):
                 self.SInr = ccard.find('CCardId').text
 
 class Event(object):
-    def __init__(self, eventxml):
+    def __init__(self, eventxml, eventid):
         self.classraces = {}
-        self.eventorID = eventxml.find('EventId').text
+        self.eventorID = eventid
         self.name = eventxml.find('Name').text
         self.startdate = eventxml.find('StartDate').find('Date').text
         self.finishdate = eventxml.find('FinishDate').find('Date').text
@@ -166,7 +166,7 @@ class EventorData(object):
         eventxml = xml.find('Event')
         eventid = eventxml.find('EventId').text
         if eventid not in self.events:
-            event = Event(eventxml)
+            event = Event(eventxml, eventid)
             self.events[eventid] = event
         else:
             # select already existing event
