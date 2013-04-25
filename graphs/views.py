@@ -1,7 +1,8 @@
 from django.http import HttpResponse
-from graphs.models import PersonRun, Classrace, Result, Split, Person
+from graphs.models import PersonRun, Classrace, Result, Split, Person, UrlLogin
 from django.shortcuts import get_object_or_404, get_list_or_404, render
 from graphs import plots, userchecker, races
+
 
 def home(request):
     """Just show list of classraces -- how many?- and welcome message/news. 
@@ -23,8 +24,32 @@ def about(request):
 
     return render(request, 'graphs/about.html', {'user': user})
 
-def my_profile(request):
+def my_profile(request, change_psw=False, first_time=False):
+    # FIXME include change psw and first time, make template.
+    return render(request, 'graphs/profile.html')
+
+
+def forgot_password(request):
+    # get email or login from post data
+    # use userchecker to generate a new password
+         # and generate a random id
+    # mail user the url login
+    # show confirmation
     pass
+
+def urllogin(request, random_id):
+    """Also used when mailing users their account"""
+    # lookup random id in random db
+    try:
+        urllogin = UrlLogin.objects.get(randomid=random_id)
+    except UrlLogin.DoesNotExist:
+        pass # FIXME show error
+    else:
+        firsttime = False
+        if urllogin.firsttime:
+            firsttime = True
+        # FIXME user userchecker for all this, and check timestamp
+        return my_profile(request, change_psw=True, first_time=firsttime)
 
 def userraces(request):
     # get all user races
