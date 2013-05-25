@@ -113,7 +113,7 @@ class PersonUpdateMixOldNewMembers(TestCase):
             assert mem in self.eventordata.competitors
 
 
-class OldEventUpdate(TestCase):
+class EventUpdate(TestCase):
     fixtures = ['graphs_events_testdata.json']
 
     def setUp(self):
@@ -144,4 +144,18 @@ class OldEventUpdate(TestCase):
         assert len(ev_updated) == 1
         assert ev_updated[0].eventor_id == event_changing.eventorID == \
             self.events_in_db[[x for x in self.events_in_db][0]].eventorID
+    
+    def test_new_events(self):
+        newevents = {}
+        newevents[1] = mocks.BaseMock(  name = 'Nya Karolinska Sprint',
+                                        startdate = '2010-01-03',
+                                        eventorID = 1)
+
+        before = Event.objects.all()
+        len(before) # executes lazy query, otherwise it will include new event.
+        result = iu.update_events(newevents)
+        assert len(Event.objects.all()) - len(before) == 1
+        newquery = Event.objects.filter(eventor_id=1)
+        assert len(newquery) == 1
+        assert newquery[0].name == newevents[1].name
 
