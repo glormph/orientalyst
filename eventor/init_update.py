@@ -91,11 +91,10 @@ def update_events(events):
     # split in old/new events
     old_events = Event.objects.filter(eventor_id__in=[int(x) for x in \
                     events]) # events is a dict with eventorIDs as keys
-    print 'eventor ids for old events', [int(x) for x in events]
     old_events_ids = [x.eventor_id for x in old_events]
     new_eventdata = {x: events[x] for x in events if x not in \
                 old_events_ids }
-    
+     
     # update old events if necessary
     for event in old_events:
         evd = events[ event.eventor_id ]
@@ -103,6 +102,7 @@ def update_events(events):
                         ['name', 'startdate', 'eventor_id'],
                         ['name', 'startdate', 'eventorID'])
     # the rest: insert and give foreign key
+    all_events = []
     new_events = []
     for edata in new_eventdata.values():
         event = generate_db_entry(Event, edata, 

@@ -7,11 +7,12 @@ when you run "manage.py test".
 
 Replace this with more appropriate tests for your application.
 """
+import copy, json
 from lxml import etree
 import mocks
 import init_update as iu
 from django.test import TestCase
-from graphs.models import Person, Si
+from graphs.models import Person, Si, Event
 
 class PersonUpdateOldMembersTest(TestCase):
     fixtures = ['auth_user_testdata.json', 'graphs_person_testdata.json']
@@ -110,4 +111,37 @@ class PersonUpdateMixOldNewMembers(TestCase):
             assert mem in self.eventordata.competitors
         for mem in newmem:
             assert mem in self.eventordata.competitors
-        
+
+
+class OldEventUpdate(TestCase):
+    fixtures = ['graphs_events_testdata.json']
+
+    def setUp(self):
+        self.events_in_db = {}
+        with open('eventor/fixtures/graphs_events_testdata.json') as fp:
+            ev_fix = json.load(fp)
+        for ev in ev_fix:
+            self.events_in_db[ev['fields']['eventor_id']] = \
+                mocks.BaseMock( name = ev['fields']['name'],
+                                startdate = ev['fields']['startdate'],
+                                eventorID = ev['fields']['eventor_id']
+                                )
+
+    def test_nochange_in_events(self):
+        result = iu.update_events(self.events_in_db)
+        assert len(result) == len(self.events_in_db)
+        # FIXME check if they have not been updated
+
+    def test_change_in_events(self):
+        # only use one event
+        event_changing = copy.deepcopy(self.events_in_db[ [x for x in \
+                                            self.events_in_db][0]])
+        event_changing.name = 'Sergels torg sprint KM'
+        event_dict = {event_changing.eventorID : event_changing}
+        result = iu.update_events(event_dict)
+        assert result[0].name == event_changing.name
+        ev_updated = Event.objects.filter(eventor_id=event_changing.eventorID)
+        assert len(ev_updated) == 1
+        assert ev_updated[0].eventor_id == event_changing.eventorID == \
+            self.events_in_db[[x for x in self.events_in_db][0]].eventorID
+
