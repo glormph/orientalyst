@@ -1,4 +1,4 @@
-from graphs.models import PersonRun, Person #, Classrace, Result, Split, Person
+from graphs.models import PersonRun, Person, UrlLogin, Si #, Classrace, Result, Split, Person
 
 class User(object):
     def __init__(self, user):
@@ -9,6 +9,7 @@ class User(object):
                 user.last_name.encode('utf-8'))
             self.alias = user.username
             self.person = Person.objects.get(user=self.user.id)
+            self.sis = Si.objects.filter(person=self.person)
 
     def is_loggedin(self):
         return self.user.is_authenticated()
@@ -21,6 +22,9 @@ class User(object):
 
     def is_uk(self):
         pass
+    
+    def get_sportident(self):
+        return [x.si for x in self.sis]
 
     def get_eventorID(self):
         return self.person.eventor_id
@@ -28,3 +32,26 @@ class User(object):
     def get_competitorID(self):
         return self.person.id
 
+
+class AnonymousUser(object):
+    def __init__(self):
+        pass
+
+    def get_user_from_urllogin(self, random_id):
+        # FIXME timestamp different when firsttime (1 week)
+        user = False
+        try:
+            urllogin = UrlLogin.objects.get(randomid=random_id)
+        except UrlLogin.DoesNotExist:
+            return False
+        
+        self.firsttime = urllogin.firsttime
+        diff = datetime.datetime.now() - urllogin.timestamp
+        if self.firsttime:
+            if diff.days < 7:
+                user = User(urllogin.user)
+        else:
+            if diff.days == 0 and diff.seconds < 900: # 15 min max
+                user = User(urllogin.user)
+        
+        return user

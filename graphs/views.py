@@ -1,8 +1,16 @@
 from django.http import HttpResponse
 from graphs.models import PersonRun, Classrace, Result, Split, Person, UrlLogin
-from django.shortcuts import get_object_or_404, get_list_or_404, render
+from django.shortcuts import get_object_or_404, get_list_or_404, render, redirect
+from django.http import Http404
+from django.contrib.auth.views import password_reset
 from graphs import plots, userchecker, races
 
+def check_user_logged_in(request):
+    user = userchecker.User(request.user)
+    if not user.is_loggedin():
+        return False
+    else:
+        return True
 
 def home(request):
     """Just show list of classraces -- how many?- and welcome message/news. 
@@ -25,33 +33,47 @@ def about(request):
     return render(request, 'graphs/about.html', {'user': user})
 
 def my_profile(request, change_psw=False, first_time=False):
-    # FIXME include change psw and first time, make template.
-    return render(request, 'graphs/profile.html')
+    if not check_user_logged_in(request):
+        return home(request)
+    if request.method == 'POST':
+        # for password changes, etc
+        if request.POST['newpass'] == request.POST['repeatnewpass']:
+            pass
+            # change pass in db
+            # login user
+            # redirect to profile, display success message
+        else:
+            return render(request, 'graphs/profile.html', {'psw': True,
+                'pswerror':'Passworden matchade inte.'
+                })
+            # redirect to profile, 
+    elif request.method == 'GET':
+        change_psw = True
+        user = userchecker.User(request.user)
+        if not user.is_loggedin() and not change_psw:
+            raise Http404 # FIXME display error and redirect home page instead
+        return render(request, 'graphs/profile.html', {'psw': change_psw,
+                        'firsttime': first_time, 'user': user})
 
 
 def forgot_password(request):
     # get email or login from post data
-    # use userchecker to generate a new password
-         # and generate a random id
-    # mail user the url login
-    # show confirmation
-    pass
+    password_reset(request)
 
 def urllogin(request, random_id):
     """Also used when mailing users their account"""
     # lookup random id in random db
-    try:
-        urllogin = UrlLogin.objects.get(randomid=random_id)
-    except UrlLogin.DoesNotExist:
-        pass # FIXME show error
+    anonuser = userchecker.AnonymousUser()
+    user = anonuser.get_user_from_urllogin(random_id)
+    if user:
+        request.user = user
+        return my_profile(request, change_psw=True, first_time=user.firsttime)
     else:
-        firsttime = False
-        if urllogin.firsttime:
-            firsttime = True
-        # FIXME user userchecker for all this, and check timestamp
-        return my_profile(request, change_psw=True, first_time=firsttime)
+        raise Http404
 
 def userraces(request):
+    if not check_user_logged_in(request):
+        return home(request)
     # get all user races
     user = userchecker.User(request.user)
     racelist = races.RaceList(user)
@@ -61,6 +83,8 @@ def userraces(request):
 
 def race(request, race_id):
     """"Show results for a single race"""
+    if not check_user_logged_in(request):
+        return home(request)
     # first check if user has run this race or if race exists
     user = userchecker.User(request.user)
     racelist = races.RaceList(user)
@@ -97,6 +121,8 @@ def race(request, race_id):
 
 def multirace(request, race_ids):
     """Show results for multiple races"""
+    if not check_user_logged_in(request):
+        return home(request)
     # check first if user has run all races
     user = 1
     
@@ -109,6 +135,8 @@ def multirace(request, race_ids):
 
 def period(request, fromdate, todate):
     """Show results of races over a period of time."""
+    if not check_user_logged_in(request):
+        return home(request)
     return HttpResponse('Analyze results over time {0} - {1}'.format(fromdate,
     todate))
 
