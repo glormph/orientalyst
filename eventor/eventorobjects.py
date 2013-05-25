@@ -58,7 +58,7 @@ class ClassRace(object):
         self.lightcondition = lightcondition
         self.results = {}
         self.checkpoints = {}
-        
+     
     def splitsFromSingleResults(self, personresult):
         person = personresult.find('Person')
         try:
@@ -116,19 +116,51 @@ class EventorData(object):
         self.classraces = {}
            
     def initialize(self):
-        print 'getting competitors'
-        self.competitors = self.getCompetitors()
+        competitorxml = self.getCompetitors()
+        self.competitors = self.parseCompetitors(competitorxml)
         for person in self.competitors[0:1]:
             print 'getting results for {0}'.format(person.firstname)
-            self.getResults(person)
+            resultxml = self.getResults(person)
+            if resultxml:
+                self.parseResults(person, resultxml)
+    
+    def download_testxml(self):
+        competitorxml = self.getCompetitors()
+        with open('test_competitors.xml', 'w') as fp:
+            fp.write(etree.tostring(competitorxml))
+        self.competitors = self.parseCompetitors(competitorxml)
 
-    def update_results(days=7):
+        for person in self.competitors[0:3]:
+            print 'getting results for {0}'.format(person.firstname)
+            resultxml = self.getResults(person)
+            if resultxml is not None:
+                with open('test_{0}_result.xml'.format(person.firstname), 'w') \
+                        as fp:
+                    fp.write(etree.tostring(resultxml))
+        
+    def update_results(self, days=7):
         for person in self.competitors:
             self.getResults(person, days)
-
+    
+    def finalize(self):
+        """Format some data for easy access by db module"""
+        tmplist = []
+        for erid in self.classraces:
+            for cr in self.classraces[erid].values():
+                tmplist.append(cr)
+        self.classraces = tmplist
+        
+        for cr in self.classraces:
+            for pid in cr.results:
+                cr.results[pid]['splits'] = [{'split_n': x,
+                                             'time': cr.results[pid]['splits'][x]}\
+                                            for x in cr.results[pid]['splits']]
+    
     def getCompetitors(self):
-        clubmembersxml = eventor.eventorAPICall(constants.API_KEY,
-        'persons/organisations/636?includeContactDetails=true' )
+        return eventor.eventorAPICall(constants.API_KEY,
+            'persons/organisations/636?includeContactDetails=true' )
+
+    def parseCompetitors(self, clubmembersxml):
         competitors = []
         for person in clubmembersxml[0:10]: 
             # FIXME maybe keep one call per competitor  
@@ -153,7 +185,17 @@ class EventorData(object):
             fromdate = now - datetime.timedelta(days)
             url = '{0}&fromDate={1}-{2}-{3}'.format(url, str(fromdate.year),
                     str(fromdate.month).zfill(2), str(fromdate.day).zfill(2) )
-        results = eventor.eventorAPICall(constants.API_KEY, url)
+        try:
+            results = eventor.eventorAPICall(constants.API_KEY, url)
+        except urllib2.HTTPError, e:
+            # FIXME figure out when error occurs
+            print 'Error occurred in communication with eventor server'
+            print e
+            return None
+        else:
+            return results
+
+    def parseResults(self, person, results):
         print 'Parsing results'
         if results.tag == 'ResultListList':
             for resultlist in results:
