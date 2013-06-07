@@ -12,14 +12,15 @@ log = logging.getLogger(__name__)
 # error handling of not found elements
 
 class ClubMember(object):
-    def __init__(self, xml):
+    def __init__(self, xml=None):
         self.SInr = None
         self.lastname = '' 
         self.firstname = ''
         self.email = None
         self.eventorID = None
-        self.parsePersonXML(xml)
         self.classraces = {}
+        if xml:
+            self.parsePersonXML(xml)
 
     def parsePersonXML(self, person):
         self.lastname = person.find('.//Family').text.encode('utf-8')
@@ -116,28 +117,20 @@ class EventorData(object):
         self.classraces = {}
            
     def initialize(self):
-        competitorxml = self.getCompetitors()
-        self.competitors = self.parseCompetitors(competitorxml)
+        get_people()
+        get_results()
+
+    def get_people(self):
+        memberxml = self.download_memberxml()
+        self.competitors = self.parse_members(memberxml)
+
+    def get_results(self):
         for person in self.competitors[0:1]:
             print 'getting results for {0}'.format(person.firstname)
             resultxml = self.getResults(person)
             if resultxml:
                 self.parseResults(person, resultxml)
     
-    def download_testxml(self):
-        competitorxml = self.getCompetitors()
-        with open('test_competitors.xml', 'w') as fp:
-            fp.write(etree.tostring(competitorxml))
-        self.competitors = self.parseCompetitors(competitorxml)
-
-        for person in self.competitors[0:3]:
-            print 'getting results for {0}'.format(person.firstname)
-            resultxml = self.getResults(person)
-            if resultxml is not None:
-                with open('test_{0}_result.xml'.format(person.firstname), 'w') \
-                        as fp:
-                    fp.write(etree.tostring(resultxml))
-        
     def update_results(self, days=7):
         for person in self.competitors:
             self.getResults(person, days)
@@ -156,24 +149,23 @@ class EventorData(object):
                                              'time': cr.results[pid]['splits'][x]}\
                                             for x in cr.results[pid]['splits']]
     
-    def getCompetitors(self):
+    def download_memberxml(self):
         return eventor.eventorAPICall(constants.API_KEY,
             'persons/organisations/636?includeContactDetails=true' )
 
-    def parseCompetitors(self, clubmembersxml):
+    def parse_members(self, clubmembersxml):
         competitors = []
         for person in clubmembersxml[0:10]: 
-            # FIXME maybe keep one call per competitor  
+            # one call per competitor, slow
             clubmember = ClubMember(person)
             try:
                 competitorxml = eventor.eventorAPICall(constants.API_KEY,
             'competitor/{0}'.format(clubmember.eventorID) )
             except urllib2.HTTPError:
-                pass # not a competitor, only a member. FIXME how to parse this
-                     # later on?
+                pass # not a competitor, only a member, skip.
             else:
                 clubmember.parse_competitiondetails(competitorxml) 
-            competitors.append( clubmember )
+            competitors.append(clubmember)
         return competitors
         
     def getResults(self, person, days=None):
