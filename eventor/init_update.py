@@ -118,29 +118,41 @@ def update_classraces(events, classraces):
     # get classraces in db
     cr_indb = Classrace.objects.filter(event__in=[x for x in
                 events])
+    
     # first create a dict containing pks for lookup and a tuple of the object and a
     # dict with relevant fields for classrace comparison
     cr_indb_dict = { x.pk: ( x, {'name': x.name, 'event': x.event, 
-                    'classname': x.classname} ) for x in cr_indb }
+                    'classname': x.classname, 'racetype': x.racetype} ) for x in cr_indb }
+    
     # filter downloaded classraces with/without db entry
+    # since they have no eventorID, we use instead a combination of
+    # event, name, classname and racetype
+    # PROBLEM: this means these cannot be updated since they are used as
+    # lookup! This may present a problem when updating eg classrace name
+    # FIXME think about which identifiers to use. date?
+    
     for cr in classraces:
-        cr_idfields = {'name': cr.name, 'event': cr.event.eventfkey, 'classname': cr.classname}
+        cr.eventfkey = cr.event.eventfkey
+        cr_idfields = {'name': cr.name, 'event': cr.eventfkey,
+            'classname' : cr.classname, 'racetype': cr.racetype}
+        is_newcr = True
         for pk in cr_indb_dict:
             if cr_idfields == cr_indb_dict[pk][1]:
+                is_newcr = False
                 # update old classrace
                 cr.classrace_fkey = cr_indb_dict[pk][0]
                 update_db_entry(cr.classrace_fkey, cr,
                         ['event', 'startdate', 'classname', 'racetype',
                                             'lightcondition', 'name'],
-                        ['event', 'date', 'classname', 'racetype', 'lightcondition',
+                        ['eventfkey', 'date', 'classname', 'racetype', 'lightcondition',
                                             'name'])
                 break
-            # new classrace if loop falls through
+        if is_newcr:
             classrace = generate_db_entry(Classrace, cr,
-                    ['event', 'startdate', 'classname', 'racetype',
-                                            'lightcondition', 'name'],
-                    ['eventfkey', 'date', 'classname', 'racetype',
-                                            'lightcondition', 'name'])
+                ['event', 'startdate', 'classname', 'racetype',
+                                        'lightcondition', 'name'],
+                ['eventfkey', 'date', 'classname', 'racetype',
+                                        'lightcondition', 'name'])
             classrace.save()
             cr.classrace_fkey = classrace
 
