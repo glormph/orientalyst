@@ -1,0 +1,29 @@
+[
+    {
+        "pk" : 1,
+        "model": "graphs.event",
+        "fields": {
+            "name": "Skogsträffen",
+            "startdate": "2001-03-04",
+            "eventor_id": 99999999
+        }
+    },
+    {
+        "pk" : 2,
+        "model": "graphs.event",
+        "fields": {
+            "name": "Arktis 3-dagars",
+            "startdate": "2001-03-05",
+            "eventor_id": 99999998
+        }
+    },
+    {
+        "pk" : 3,
+        "model": "graphs.event",
+        "fields": {
+            "name": "Beelzebub OK Lång",
+            "startdate": "2001-03-12",
+            "eventor_id": 99999997
+        }
+    }
+]       

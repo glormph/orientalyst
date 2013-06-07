@@ -7,20 +7,66 @@ when you run "manage.py test".
 
 Replace this with more appropriate tests for your application.
 """
-import copy, json
+import os, copy, json
 from lxml import etree
 import mocks
 import init_update as iu
 from django.test import TestCase
-from graphs.models import Person, Si, Event
+from graphs.models import Person, Si, Event, Classrace
+
+
+def create_test_fixtures(self):
+    # fixtures for competitors in json
+    get_people()
+    fixtures = []
+    for comp in self.competitors:
+        fix = {'name': comp.__class__.__name__,
+                            'attributes': {}}
+        for attr in comp.__dict__:
+            fix['attributes'][attr] = comp.__dict__['attr']
+        fixtures.append(fix)
+    with open('eventor/fixtures/test_competitors.json', 'w') as fp:
+        json.dump(fixtures, fp)
+    
+    # raw xml for results
+    for person in self.competitors[0:3]:
+        print 'getting results for {0}'.format(person.firstname)
+        resultxml = self.getResults(person)
+        if resultxml is not None:
+            with open('test_{0}_result.xml'.format(person.firstname), 'w') \
+                    as fp:
+                fp.write(etree.tostring(resultxml))
 
 class PersonUpdateOldMembersTest(TestCase):
     fixtures = ['auth_user_testdata.json', 'graphs_person_testdata.json']
+
+    def create_fixtures(self):
+        # fixtures for competitors in json
+        ed = iu.eventorobjects.EventorData()
+        ed.get_people()
+        fixtures = []
+        for comp in ed.competitors:
+            fix = {'name': comp.__class__.__name__,
+                                'attributes': {}}
+            for attr in comp.__dict__:
+                fix['attributes'][attr] = comp.__dict__[attr]
+            fixtures.append(fix)
+        with open('eventor/fixtures/test_competitors.json', 'w') as fp:
+            json.dump(fixtures, fp)
+
     def setUp(self):
-        with open('eventor/fixtures/test_competitors.xml') as fp:
-            cpxml = etree.fromstring(fp.read())
+        if not os.path.exists('eventor/fixtures/test_competitors.json'):
+            self.create_fixtures()
+
+        with open('eventor/fixtures/test_competitors.json') as fp:
+            personfixtures = json.load(fp)
         self.eventordata = iu.eventorobjects.EventorData()
-        self.eventordata.competitors = self.eventordata.parseCompetitors(cpxml)
+        self.eventordata.competitors = []
+        for fix in personfixtures:
+            comp = iu.eventorobjects.ClubMember()
+            for attr in fix['attributes']:
+                setattr(comp, attr, fix['attributes'][attr])
+            self.eventordata.competitors.append(comp)
         # only use the first 4 competitors of the fixture
         self.eventordata.competitors = self.eventordata.competitors[0:4]
         
@@ -75,14 +121,11 @@ class PersonUpdateNewMembersTest(TestCase):
             siobj = [x for x in allsis if x.person == person][0]
             assert siobj.si == int(comp.SInr)
 
-class PersonUpdateMixOldNewMembers(TestCase):
+class PersonUpdateMixOldNewMembers(PersonUpdateOldMembersTest):
     fixtures = ['auth_user_testdata.json', 'graphs_person_testdata.json']
     def setUp(self):
-        with open('eventor/fixtures/test_competitors.xml') as fp:
-            cpxml = etree.fromstring(fp.read())
-        self.eventordata = iu.eventorobjects.EventorData()
-        self.eventordata.competitors = self.eventordata.parseCompetitors(cpxml)
-        self.eventordata.competitors = self.eventordata.competitors[0:4]
+        super(PersonUpdateMixOldNewMembers, self).setUp()
+        
         self.eventordata.competitors.extend([
             mocks.BaseMock( SInr = '123',
                             firstname = 'Pelle',
@@ -159,3 +202,51 @@ class EventUpdate(TestCase):
         assert len(newquery) == 1
         assert newquery[0].name == newevents[1].name
 
+
+class UpdateClassraces(TestCase):
+    fixtures = ['graphs_events_testdata.json',
+             'graphs_classrace_testdata.json']
+    
+    def setUp(self):
+        cr_db = Classrace.objects.get(pk=1)
+        self.oldcr = mocks.BaseMock(
+           date=cr_db.startdate,
+           classname=cr_db.classname,
+           racetype=cr_db.racetype,
+           lightcondition=cr_db.lightcondition,
+           name=cr_db.name,
+           event = mocks.BaseMock(
+                eventfkey = cr_db.event)
+        )
+        self.firstevent = Event.objects.get(pk=1)
+        
+        
+    def test_old_classrace(self):
+        allcrs_before = [x for x in Classrace.objects.all()]
+        iu.update_classraces([self.firstevent], [self.oldcr])
+        allcrs_after = [x for x in Classrace.objects.all()]
+        assert allcrs_before == allcrs_after
+
+    def test_update_old_classrace(self):
+        updatedcr = copy.deepcopy(self.oldcr)
+        updatedcr.lightcondition = 'updated light'
+        allcrs_before = [x for x in Classrace.objects.all()]
+        iu.update_classraces([self.firstevent], [updatedcr])
+        allcrs_after = [x for x in Classrace.objects.all()]
+        assert len(allcrs_before) == len(allcrs_after)
+        assert allcrs_before != allcrs_after 
+
+    def test_new_classrace_of_empty_event(self):
+        secondevent = Event.objects.get(pk=2)
+        newcr = copy.deepcopy(self.oldcr)
+        newcr.classname = 'new classname'
+        newcr.racetype = 'short'
+        newcr.event.eventkey = secondevent
+        newcr.name = 'new name'
+        
+        allcrs_before = [x for x in Classrace.objects.all()]
+        print allcrs_before
+        iu.update_classraces([secondevent], [newcr])
+        allcrs_after = [x for x in Classrace.objects.all()]
+        print allcrs_after
+        assert len(allcrs_before) == len(allcrs_after) - 1

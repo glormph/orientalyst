@@ -1,0 +1,38 @@
+[
+    {
+        "pk" : 1,
+        "model": "graphs.classrace",
+        "fields": {
+            "event": 1,
+            "startdate": "2001-03-04",
+            "classname": "H21",
+            "racetype" : "long",
+            "lightcondition": "light",
+            "name": "Sisyphos i skogen"
+        }
+    },
+    {
+        "pk" : 2,
+        "model": "graphs.classrace",
+        "fields": {
+            "event": 1,
+            "startdate": "2001-03-05",
+            "classname": "H21",
+            "racetype" : "short",
+            "lightcondition": "light",
+            "name": "Poof!"
+        }
+    },
+    {
+        "pk" : 3,
+        "model": "graphs.classrace",
+        "fields": {
+            "event": 3,
+            "startdate": "2001-03-12",
+            "classname": "D21",
+            "racetype" : "long",
+            "lightcondition": "light",
+            "name": "Eternal roast"
+        }
+    }
+]
