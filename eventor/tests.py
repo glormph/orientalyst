@@ -14,50 +14,10 @@ import init_update as iu
 from django.test import TestCase
 from graphs.models import Person, Si, Event, Classrace
 
-
-def create_test_fixtures(self):
-    # fixtures for competitors in json
-    get_people()
-    fixtures = []
-    for comp in self.competitors:
-        fix = {'name': comp.__class__.__name__,
-                            'attributes': {}}
-        for attr in comp.__dict__:
-            fix['attributes'][attr] = comp.__dict__['attr']
-        fixtures.append(fix)
-    with open('eventor/fixtures/test_competitors.json', 'w') as fp:
-        json.dump(fixtures, fp)
-    
-    # raw xml for results
-    for person in self.competitors[0:3]:
-        print 'getting results for {0}'.format(person.firstname)
-        resultxml = self.getResults(person)
-        if resultxml is not None:
-            with open('test_{0}_result.xml'.format(person.firstname), 'w') \
-                    as fp:
-                fp.write(etree.tostring(resultxml))
-
 class PersonUpdateOldMembersTest(TestCase):
     fixtures = ['auth_user_testdata.json', 'graphs_person_testdata.json']
 
-    def create_fixtures(self):
-        # fixtures for competitors in json
-        ed = iu.eventorobjects.EventorData()
-        ed.get_people()
-        fixtures = []
-        for comp in ed.competitors:
-            fix = {'name': comp.__class__.__name__,
-                                'attributes': {}}
-            for attr in comp.__dict__:
-                fix['attributes'][attr] = comp.__dict__[attr]
-            fixtures.append(fix)
-        with open('eventor/fixtures/test_competitors.json', 'w') as fp:
-            json.dump(fixtures, fp)
-
     def setUp(self):
-        if not os.path.exists('eventor/fixtures/test_competitors.json'):
-            self.create_fixtures()
-
         with open('eventor/fixtures/test_competitors.json') as fp:
             personfixtures = json.load(fp)
         self.eventordata = iu.eventorobjects.EventorData()
