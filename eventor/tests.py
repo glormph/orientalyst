@@ -261,7 +261,20 @@ class UpdateSplit(TestCase):
         self.splits_before = [x for x in Split.objects.all()]
 
     def test_newsplit(self):
-        pass
+        spobj = Split.objects.get(pk=1)
+        resobj = spobj.result
+        highest_splitn = max([x.split_n for x in \
+                        Split.objects.filter(result=resobj)])
+
+        cr = mocks.BaseMock(results={resobj.person_eventor_id : 
+                                      {'resultobj': resobj,
+                                       'splits': [{'split_n': highest_splitn+1 ,
+                                            'time': spobj.splittime}]
+                                      }
+                                    })
+
+        iu.update_splits([cr])
+        assert len(self.splits_before) == len([x for x in Split.objects.all()]) - 1
 
     def test_oldsplit(self):
         spobj = Split.objects.get(pk=1)
