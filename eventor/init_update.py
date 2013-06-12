@@ -160,7 +160,7 @@ def update_results(classraces):
     # get old results from db and make lookup dict
     oldresults = Result.objects.filter(classrace__in=[x.classrace_fkey for x \
                                                     in classraces])
-    oldreslookup, newresults, newresultdata = {}, [], {}
+    oldreslookup, newresults = {}, []
     for x in oldresults:
         if x.classrace not in oldreslookup:
             oldreslookup[x.classrace] = {}
@@ -171,9 +171,8 @@ def update_results(classraces):
             cr.results[personid]['eventorID'] = personid
             cr.results[personid]['cr'] = cr.classrace_fkey
             try:
-                oldresult = oldreslookup[cr][personid]
+                oldresult = oldreslookup[cr.classrace_fkey][personid]
             except KeyError:
-                newresultdata.append(cr.results[personid])
                 newresults.append(generate_db_entry(Result,
                                     cr.results[personid], 
                     ['classrace', 'person_eventor_id', 'firstname', 'lastname',
@@ -188,40 +187,42 @@ def update_results(classraces):
                     ['cr', 'eventorID', 'firstname', 'lastname',
                                         'position', 'time', 'status', 'diff'])
     # new results: bulk_create, then get result obj and attach to result datas
-    Result.objects.bulk_create(newresults) 
-    newres_cr = Result.objects.filter(classrace__in=[x.classrace \
-                for x in newresults])
-    newres_lookup = {}
-    for res in newres_cr:
-        if res.classrace not in newres_lookup:
-            newres_lookup[ res.classrace ] = {}
-        newres_lookup[ res.classrace ][ res.person_eventor_id ] = res
-    for cr in data.classraces:
-        for personid in cr.results:
-            if not 'resultobj' in cr.results[personid]:
-                try:
-                    cr.results[personid]['resultobj'] = \
-                            newres_lookup[cr.classrace_fkey][personid]
-                except KeyError:
-                    raise
-                    pass # FIXME what if not in dict? Lookup problem?
+    if newresults:
+        Result.objects.bulk_create(newresults) 
+        newres_cr = Result.objects.filter(classrace__in=[x.classrace \
+                    for x in newresults])
+        newres_lookup = {}
+        for res in newres_cr:
+            if res.classrace not in newres_lookup:
+                newres_lookup[ res.classrace ] = {}
+            newres_lookup[ res.classrace ][ res.person_eventor_id ] = res
+        for cr in classraces:
+            for personid in cr.results:
+                if not 'resultobj' in cr.results[personid]:
+                    try:
+                        cr.results[personid]['resultobj'] = \
+                                newres_lookup[cr.classrace_fkey][personid]
+                    except KeyError:
+                        raise
+                        # FIXME what if not in dict? Lookup problem?
 
-def update_splits(): #FIXME
+
+def update_splits(classraces): #FIXME
     # old splits: update
     splitsindb = Split.objects.filter(result__in=\
-      [x.results[y]['resultobj'] for x in data.classraces for y in x.results])
+      [x.results[y]['resultobj'] for x in classraces for y in x.results])
     splitslookup, newsplits = {}, []
     for sp in splitsindb:
         if sp.result not in splitslookup:
             splitslookup[sp.result] = {}
         splitslookup[sp.result][sp.split_n] = sp
-    for cr in data.classraces:
+    for cr in classraces:
         for pid in cr.results:
             for sp in cr.results[pid]['splits']:
                 sp['resultobj'] = cr.results[pid]['resultobj']
                 try:
                     spobj = \
-                        splitslookup[cr.results[pid]['resultobj']]['split_n']
+                        splitslookup[cr.results[pid]['resultobj']][sp['split_n']]
                 except KeyError:
                     newsplits.append( generate_db_entry(Split, sp,
                     ['result', 'split_n', 'splittime'],
@@ -233,26 +234,28 @@ def update_splits(): #FIXME
                 
     # new splits: bulk create
     Split.objects.bulk_create(newsplits)
-    
+
+
+def update_personrun(eventordata):
     # write to who-runs-what table
-    data.person_runs = []
-    for p in data.competitors:
+    eventordata.person_runs = []
+    for p in eventordata.competitors:
         for erid in p.classraces:
             for cn in p.classraces[erid]:
-                data.person_run.append({
+                eventordata.person_run.append({
                     'person': p,
                     'classrace': p.classraces[erid][cn].classrace_fkey,
                     'si' : p.si_fkey
                     })
     
-    oldprs = PersonRun.objects.filter(classrace__in = data.classraces)
+    oldprs = PersonRun.objects.filter(classrace__in = eventordata.classraces)
     oldprlookup = {}
     newprs = []
     for pr in oldprs:
         if not pr.classrace in oldprs:
             oldprs[pr.classrace] = {}
         oldprs[pr.classrace][pr.person] = pr
-    for prun in data.person_runs:
+    for prun in eventordata.person_runs:
         try:
             probj = oldprlookup[ prun['classrace'] ][ prun['person'] ]
         except KeyError:

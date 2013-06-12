@@ -12,7 +12,7 @@ from lxml import etree
 import mocks
 import init_update as iu
 from django.test import TestCase
-from graphs.models import Person, Si, Event, Classrace
+from graphs.models import Person, Si, Event, Classrace, Result, Split, PersonRun
 
 class PersonUpdateOldMembersTest(TestCase):
     fixtures = ['auth_user_testdata.json', 'graphs_person_testdata.json']
@@ -205,8 +205,74 @@ class UpdateClassraces(TestCase):
         newcr.name = 'new name'
         
         allcrs_before = [x for x in Classrace.objects.all()]
-        print allcrs_before
         iu.update_classraces([secondevent], [newcr])
         allcrs_after = [x for x in Classrace.objects.all()]
-        print allcrs_after
         assert len(allcrs_before) == len(allcrs_after) - 1
+
+
+class UpdateResults(TestCase):
+    fixtures = ['graphs_classrace_testdata.json', 'graphs_events_testdata.json',  'graphs_result_testdata.json']
+
+    def setUp(self):
+        self.results_before = [x for x in Result.objects.all()]
+        crfkey = Classrace.objects.get(pk=1) 
+        self.oldcr = mocks.BaseMock(classrace_fkey=crfkey, results = {
+            '23': {   'firstname': 'Per',
+                    'lastname': 'Permans',
+                    'position': 2,
+                    'status': 'OK',
+                    'time': '130',
+                    'diff': '0'}})
+        
+        self.newcr = mocks.BaseMock(classrace_fkey=crfkey, results = {
+            '45': {   'firstname': 'Jonny',
+                    'lastname': 'Jonnison',
+                    'position': 5,
+                    'status': 'OK',
+                    'time': '200',
+                    'diff': '50'}})
+
+    def test_oldresults(self):
+        iu.update_results([self.oldcr])
+        results_after = [x for x in Result.objects.all()]
+        assert self.results_before == results_after
+
+    def test_newresults(self):
+        iu.update_results([self.newcr])
+        results_after = [x for x in Result.objects.all()]
+        assert len(self.results_before) == len(results_after) - 1
+     
+    def test_badresults(self):
+        pass
+        # FIXME what are bad results?
+        # what exceptions need handling?
+
+    def test_mixed_oldnew_results(self):
+        iu.update_results([self.oldcr, self.newcr])
+        results_after = [x for x in Result.objects.all()]
+        assert len(self.results_before) == len(results_after) - 1
+
+class UpdateSplit(TestCase):
+    fixtures = ['graphs_classrace_testdata.json',
+    'graphs_events_testdata.json',  'graphs_result_testdata.json',
+    'graphs_split_testdata.json']
+
+    def setUp(self):
+        self.splits_before = [x for x in Split.objects.all()]
+
+    def test_newsplit(self):
+        pass
+
+    def test_oldsplit(self):
+        spobj = Split.objects.get(pk=1)
+        resobj = spobj.result
+        cr = mocks.BaseMock(results={resobj.person_eventor_id : 
+                                      {'resultobj': resobj,
+                                       'splits': [{'split_n': spobj.split_n,
+                                            'time': spobj.splittime}]
+                                      }
+                                    })
+
+        iu.update_splits([cr])
+        assert self.splits_before == [x for x in Split.objects.all()]
+
