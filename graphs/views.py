@@ -18,14 +18,9 @@ def home(request):
     # get logged in user
     user = userchecker.User(request.user)
     racelist = races.RaceList(user)
-
-    if not user.is_loggedin():
-        latestraces = False
-    else:
-        latestraces = racelist.get_latest_races(10)
-        
+    latestraces = racelist.get_latest_races(10)
     return render(request, 'graphs/home.html', {'user': user, 'racelist':
-    latestraces})
+                    latestraces})
 
 def about(request): 
     user = userchecker.User(request.user)

@@ -7,8 +7,11 @@
 
 <div id="sidemenu" class="column">
 
-{% if racelist %}
+{% if user.is_loggedin %}
 <div id="sidemenucontent">Senaste tävlingar<br>
+{% if not racelist %}
+<p>Inga tävlingar hittade</p>
+{% endif %}
 {% for race in racelist %}
 <a href="/race/{{ race.cr_id }}">{{ race.name }}</a> <br>
 {% endfor %}
