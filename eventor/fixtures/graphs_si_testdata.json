@@ -1,0 +1,18 @@
+[
+    {
+        "pk" : 1,
+        "model": "graphs.si",
+        "fields": {
+            "person" : 1,
+            "si" : 1234
+            }
+    },
+    {
+        "pk" : 2,
+        "model": "graphs.si",
+        "fields": {
+            "person" : 2,
+            "si" : 12345
+            }
+    }
+]

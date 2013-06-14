@@ -1,0 +1,20 @@
+[
+    {   
+        "pk": 1,
+        "model" : "graphs.split",
+        "fields" : {
+            "result" : 1,
+            "split_n" : 1,
+            "splittime" : "140"
+        }   
+    },
+    { 
+        "pk": 2,
+        "model" : "graphs.split",
+        "fields" : {
+            "result" : 1,
+            "split_n" : 2,
+            "splittime" : "230"
+        }   
+    }
+]
