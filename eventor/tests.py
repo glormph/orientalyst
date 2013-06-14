@@ -44,19 +44,19 @@ class PersonUpdateNewMembersTest(TestCase):
     def setUp(self):
         self.eventordata = iu.eventorobjects.EventorData()
         self.eventordata.competitors = [
-            mocks.BaseMock( SInr = '123',
+            mocks.BaseMock( SInrs = ['123'],
                             firstname = 'Pelle',
                             lastname = 'Plupp',
                             email = 'perplupp@localhost',
                             eventorID = 45678979,
                             ),
-            mocks.BaseMock( SInr = '1234',
+            mocks.BaseMock( SInrs = ['1234'],
                             lastname = 'Rutger',
                             firstname = 'Jönåker',
                             email = 'rj@localhost',
                             eventorID = 45667867,
                             ),
-            mocks.BaseMock( SInr = '12',
+            mocks.BaseMock( SInrs = ['12'],
                             firstname = 'Surbritt',
                             lastname = 'Jonsson',
                             email = 'suris@localhost',
@@ -78,8 +78,8 @@ class PersonUpdateNewMembersTest(TestCase):
         for person in newpersons:
             comp = [x for x in self.eventordata.competitors \
                         if x.eventorID == person.eventor_id][0]
-            siobj = [x for x in allsis if x.person == person][0]
-            assert siobj.si == int(comp.SInr)
+            siobj = [x.si for x in allsis if x.person == person]
+            assert siobj == [int(x) for x in comp.SInrs]
 
 class PersonUpdateMixOldNewMembers(PersonUpdateOldMembersTest):
     fixtures = ['auth_user_testdata.json', 'graphs_person_testdata.json']
@@ -87,19 +87,19 @@ class PersonUpdateMixOldNewMembers(PersonUpdateOldMembersTest):
         super(PersonUpdateMixOldNewMembers, self).setUp()
         
         self.eventordata.competitors.extend([
-            mocks.BaseMock( SInr = '123',
+            mocks.BaseMock( SInrs = ['123'],
                             firstname = 'Pelle',
                             lastname = 'Plupp',
                             email = 'perplupp@localhost',
                             eventorID = 45678979,
                             ),
-            mocks.BaseMock( SInr = '1234',
+            mocks.BaseMock( SInrs = ['1234'],
                             lastname = 'Rutger',
                             firstname = 'Jönåker',
                             email = 'rj@localhost',
                             eventorID = 45667867,
                             ),
-            mocks.BaseMock( SInr = '12',
+            mocks.BaseMock( SInrs = ['12'],
                             firstname = 'Surbritt',
                             lastname = 'Jonsson',
                             email = 'suris@localhost',
@@ -289,3 +289,41 @@ class UpdateSplit(TestCase):
         iu.update_splits([cr])
         assert self.splits_before == [x for x in Split.objects.all()]
 
+
+class UpdatePersonRun(TestCase):
+    fixtures = ['graphs_person_testdata.json', 'graphs_classrace_testdata.json',
+    'graphs_events_testdata.json', 'graphs_personrun_testdata.json',
+    'graphs_si_testdata.json', 'auth_user_testdata.json']
+    
+    def setUp(self):
+        self.oldentries = [x for x in PersonRun.objects.all()]
+        crfkey = self.oldentries[0].classrace
+        self.aclassrace = mocks.BaseMock(classrace_fkey=crfkey)
+
+    def test_oldpersonrun(self):
+        person = self.oldentries[0].person
+        competitor = mocks.BaseMock(classraces = { 1 : { 'H21':
+                self.aclassrace } },
+                person_fkey = person)
+        edata = mocks.BaseMock(
+            competitors = [competitor],
+            classraces = [self.aclassrace])
+
+        iu.update_personrun(edata)
+        assert self.oldentries == [x for x in PersonRun.objects.all()]
+
+    def test_newpersonrun(self):
+        # get person not existing in fixtures
+        i = 1
+        while i in [x.person.id for x in self.oldentries]:
+            i += 1
+        person = Person.objects.get(pk=i)
+        competitor = mocks.BaseMock(classraces = { 1 : { 'H21':
+                self.aclassrace } },
+                person_fkey = person)
+        edata = mocks.BaseMock(
+            competitors = [competitor],
+            classraces = [self.aclassrace])
+        iu.update_personrun(edata)
+        assert len(self.oldentries) == len([x for x in \
+                PersonRun.objects.all()]) -1

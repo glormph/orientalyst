@@ -237,36 +237,41 @@ def update_splits(classraces): #FIXME
 
 
 def update_personrun(eventordata):
-    # write to who-runs-what table
+    """Updates who-runs-what table"""
+
+    # first make person_run objects in eventordata
+    # this maybe can be done in eventor file
     eventordata.person_runs = []
     for p in eventordata.competitors:
         for erid in p.classraces:
             for cn in p.classraces[erid]:
-                eventordata.person_run.append({
-                    'person': p,
+                eventordata.person_runs.append({
+                    'person': p.person_fkey,
                     'classrace': p.classraces[erid][cn].classrace_fkey,
-                    'si' : p.si_fkey
                     })
     
-    oldprs = PersonRun.objects.filter(classrace__in = eventordata.classraces)
+    # get old personruns and create a lookup
+    oldprs = PersonRun.objects.filter(classrace__in = \
+            [x.classrace_fkey for x in eventordata.classraces])
     oldprlookup = {}
     newprs = []
     for pr in oldprs:
         if not pr.classrace in oldprs:
-            oldprs[pr.classrace] = {}
-        oldprs[pr.classrace][pr.person] = pr
+            oldprlookup[pr.classrace] = {}
+        oldprlookup[pr.classrace][pr.person] = pr
+
+    # now update
     for prun in eventordata.person_runs:
         try:
             probj = oldprlookup[ prun['classrace'] ][ prun['person'] ]
         except KeyError:
-            newprs.append(PersonRun(  person=person.person_fkey,
-                    si = person.si_fkey,
-                    classrace =
-                    person.classraces[er_id][cname].classrace_fkey))
+            newprs.append(PersonRun(  
+                person=prun['person'],
+                classrace = prun['classrace']))
         else:
             update_db_entry(probj, prun,
-                    ['si', 'person', 'classrace'],
-                    ['si', 'person', 'classrace'])
+                    ['person', 'classrace'],
+                    ['person', 'classrace'])
     
     PersonRun.objects.bulk_create(newprs)
     # done
@@ -278,7 +283,7 @@ def update_db_persons(data):
     old_persons = Person.objects.all().filter(eventor_id__in=[x.eventorID \
                 for x in data.competitors])
     
-    old_members_eventor = [str(x.eventor_id) for x in old_persons]
+    old_members_eventor = {str(x.eventor_id): x for x in old_persons}
     old_members = [x for x in data.competitors if x.eventorID in
                         old_members_eventor]
     for competitor in data.competitors:
@@ -288,15 +293,24 @@ def update_db_persons(data):
                     firstname=competitor.firstname, lastname=competitor.lastname,
                     user=useraccount)
             person.save() # no need for bulk insert, usually few persons
+            competitor.person_fkey = person
             new_persons.append( person )
             new_members.append( competitor )
 
-    for person in old_members:
-        pass
+    for competitor in old_members:
+        # add person and sinr django objects to competitors
+        competitor.person_fkey = old_members_eventor[competitor.eventorID]
+        competitor.si_fkeys = {}
+        for sinr in competitor.SInrs:
+            siobj = Si.objects.get(si=int(sinr))
+            competitor.si_fkeys[int(sinr)] = siobj
         # FIXME upsert in case of name/email change?
     for person, member in zip(new_persons, new_members):
-        si = Si(si=member.SInr, person=person)
-        si.save()
+        member.si_fkeys = {}
+        for sinr in member.SInrs:
+            si = Si(si=int(sinr), person=person)
+            si.save()
+            member.si_fkeys[int(sinr)] = si
     
     return old_members, new_members
 

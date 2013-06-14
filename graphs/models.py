@@ -41,7 +41,8 @@ class Classrace(models.Model):
 
 class PersonRun(models.Model):
     person = models.ForeignKey(Person)
-    si = models.ForeignKey(Si)
+    # I removed SI from table since I'm not sure it can be retrieved from
+    # results xml
     classrace = models.ForeignKey(Classrace)
 
 
