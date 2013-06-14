@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 
 class ClubMember(object):
     def __init__(self, xml=None):
-        self.SInr = None
+        self.SInrs = []
         self.lastname = '' 
         self.firstname = ''
         self.email = None
@@ -35,7 +35,7 @@ class ClubMember(object):
         ccards = xml.findall('.//CCard')
         for ccard in ccards:
             if ccard.find('PunchingUnitType').attrib['value'] == 'SI':
-                self.SInr = ccard.find('CCardId').text
+                self.SInrs.append(ccard.find('CCardId').text)
 
 class Event(object):
     def __init__(self, eventxml, eventid):
