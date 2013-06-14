@@ -48,12 +48,12 @@ def my_profile(request, change_psw=False, first_time=False):
                 })
             # redirect to profile, 
     elif request.method == 'GET':
-        change_psw = True
         user = userchecker.User(request.user)
         if not user.is_loggedin() and not change_psw:
             raise Http404 # FIXME display error and redirect home page instead
         return render(request, 'graphs/profile.html', {'psw': change_psw,
                         'firsttime': first_time, 'user': user})
+
 
 
 def forgot_password(request):
