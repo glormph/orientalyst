@@ -31,7 +31,7 @@
             "groups": [], 
             "user_permissions": [], 
             "password": "pbkdf2_sha256$10000$qRCyf8xuejG0$IU1Dq56Njgm5hVC+Nv510EvSNrDKiYKF7GvTrBtn9N4=", 
-            "email": "ladu@local.notexist", 
+            "email": "ladu@local.not", 
             "date_joined": "2013-04-27T19:29:41.054Z"
         }
     }, 

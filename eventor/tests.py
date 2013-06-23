@@ -14,6 +14,39 @@ import init_update as iu
 from django.test import TestCase
 from graphs.models import Person, Si, Event, Classrace, Result, Split, PersonRun
 
+class PasswordResetNewUserTest(TestCase):
+    fixtures = ['auth_user_testdata.json', 'graphs_person_testdata.json']
+    def setUp(self):
+        self.competitors = [
+            mocks.BaseMock( SInrs = ['123'],
+                            firstname = 'Pelle',
+                            lastname = 'Plupp',
+                            email = 'ladu@local.not',
+                            eventorID = 45678979,
+                            ),
+            mocks.BaseMock( SInrs = ['1234'],
+                            lastname = 'Rutger',
+                            firstname = 'Jönåker',
+                            email = 'rutgerj@hot.not',
+                            eventorID = 45667867,
+                            ),
+            mocks.BaseMock( SInrs = ['12'],
+                            firstname = 'Surbritt',
+                            lastname = 'Jonsson',
+                            email = 'suris@local',
+                            eventorID = 45687907,
+                            )]
+
+    def test_members_returned(self):
+        iu.password_reset_for_new_users(self.competitors)
+        from django.core.mail import outbox
+        assert outbox[0].to == [self.competitors[0].email]
+
+    def test_mail_address_wrong(self):
+        iu.password_reset_for_new_users([self.competitors[-1]])
+        from django.core.mail import outbox
+        assert outbox == []
+
 class PersonUpdateOldMembersTest(TestCase):
     fixtures = ['auth_user_testdata.json', 'graphs_person_testdata.json']
 
@@ -47,13 +80,13 @@ class PersonUpdateNewMembersTest(TestCase):
             mocks.BaseMock( SInrs = ['123'],
                             firstname = 'Pelle',
                             lastname = 'Plupp',
-                            email = 'perplupp@localhost',
+                            email = 'boekeltjuh@hotmail.com',
                             eventorID = 45678979,
                             ),
             mocks.BaseMock( SInrs = ['1234'],
                             lastname = 'Rutger',
                             firstname = 'Jönåker',
-                            email = 'rj@localhost',
+                            email = 'boekeltjuh@hotmail.com',
                             eventorID = 45667867,
                             ),
             mocks.BaseMock( SInrs = ['12'],
@@ -102,7 +135,7 @@ class PersonUpdateMixOldNewMembers(PersonUpdateOldMembersTest):
             mocks.BaseMock( SInrs = ['12'],
                             firstname = 'Surbritt',
                             lastname = 'Jonsson',
-                            email = 'suris@localhost',
+                            email = 'suris@localhost.here',
                             eventorID = 45687907,
                             )])
     

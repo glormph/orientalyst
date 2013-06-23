@@ -1,10 +1,11 @@
 # vim: set fileencoding=utf-8 :
 import sys, os, string, random
-import eventorobjects, postgres
+import eventorobjects, constants
 from olstats import settings
 from django.core.management import setup_environ
 setup_environ(settings)
 from django.contrib.auth.models import User
+from django.contrib.auth.forms import PasswordResetForm
 from graphs.models import Person, Event, Classrace, PersonRun, Result, Si,Split 
 
 def update():
@@ -14,6 +15,7 @@ def update():
     for person in new_members[:1]:
         resultxml = data.getResults(person)
         data.parseResults(person, resultxml)
+    password_reset_for_new_users(new_members)
     for person in old_members[:1]:
         resultxml = data.getResults(person, days=7) 
         data.parseResults(person, resultxml)
@@ -27,7 +29,47 @@ def update():
     update_personruns()
 
 
+def update_db_persons(data):
+    """Feed downloaded eventor data, db will be updated with persons."""
+    new_members, new_persons = [], []
+
+    old_persons = Person.objects.all().filter(eventor_id__in=[x.eventorID \
+                for x in data.competitors])
+    
+    old_members_eventor = {str(x.eventor_id): x for x in old_persons}
+    old_members = [x for x in data.competitors if x.eventorID in
+                        old_members_eventor]
+    for competitor in data.competitors:
+        if competitor.eventorID not in old_members_eventor:
+            # first get user account since it needs to exist before updating db
+            useraccount = create_user_account(competitor)
+            person = Person(eventor_id=competitor.eventorID,
+                    firstname=competitor.firstname, lastname=competitor.lastname,
+                    user=useraccount)
+            person.save() # no need for bulk insert, usually few persons
+            competitor.person_fkey = person
+            new_persons.append( person )
+            new_members.append( competitor )
+
+    for competitor in old_members:
+        # add person and sinr django objects to competitors
+        competitor.person_fkey = old_members_eventor[competitor.eventorID]
+        competitor.si_fkeys = {}
+        for sinr in competitor.SInrs:
+            siobj = Si.objects.get(si=int(sinr))
+            competitor.si_fkeys[int(sinr)] = siobj
+        # FIXME upsert in case of name/email change?
+    for person, member in zip(new_persons, new_members):
+        member.si_fkeys = {}
+        for sinr in member.SInrs:
+            si = Si(si=int(sinr), person=person)
+            si.save()
+            member.si_fkeys[int(sinr)] = si
+    
+    return old_members, new_members
+
 def create_user_account(person):
+    # should probably be put in file with other user/account code
     # check if user account exists:
     try:
         existing_user = User.objects.get(email=person.email)
@@ -36,14 +78,6 @@ def create_user_account(person):
     else:
         return existing_user
 
-    print 'Creating user account'
-    # empty mail people get an account too. Wont be mailing them though.
-    if not person.email:
-        print 'No email found!'
-        print person.firstname, person.lastname
-        person.email = '{0}_{1}@localhost'.format(person.firstname,
-        person.lastname)
-    
     # username, generate one
     username = person.firstname
     samefirstname = User.objects.all().filter(first_name=username)
@@ -57,12 +91,27 @@ def create_user_account(person):
     random.seed = (os.urandom(1024))
     password = ''.join(random.choice(chars) for i in range(12))
 
+    # empty mail people get an account too. Wont be mailing them though.
+    if not person.email:
+        person.email = '{0}_{1}@localhost'.format(person.firstname,
+                            person.lastname)
+        
     # now create user and save
     user = User.objects.create_user(username, person.email, password)
     user.first_name = person.firstname
     user.last_name = person.lastname
     user.save()
+    
     return user
+
+def password_reset_for_new_users(persons):
+    for person in persons:
+        # for testing, email addresses to be ignored
+        if person.email.split('@')[1] == 'localhost':
+            continue
+        form = PasswordResetForm({'email': person.email}) 
+        if form.is_valid():
+            form.save(from_email=constants.FROM_EMAIL)
 
 def get_lookup_by_type(d, k):
     if type(d) == dict:
@@ -276,44 +325,4 @@ def update_personrun(eventordata):
     PersonRun.objects.bulk_create(newprs)
     # done
 
-def update_db_persons(data):
-    """Feed downloaded eventor data, db will be updated with persons."""
-    new_members, new_persons = [], []
 
-    old_persons = Person.objects.all().filter(eventor_id__in=[x.eventorID \
-                for x in data.competitors])
-    
-    old_members_eventor = {str(x.eventor_id): x for x in old_persons}
-    old_members = [x for x in data.competitors if x.eventorID in
-                        old_members_eventor]
-    for competitor in data.competitors:
-        if competitor.eventorID not in old_members_eventor:
-            useraccount = create_user_account(competitor)
-            person = Person(eventor_id=competitor.eventorID,
-                    firstname=competitor.firstname, lastname=competitor.lastname,
-                    user=useraccount)
-            person.save() # no need for bulk insert, usually few persons
-            competitor.person_fkey = person
-            new_persons.append( person )
-            new_members.append( competitor )
-
-    for competitor in old_members:
-        # add person and sinr django objects to competitors
-        competitor.person_fkey = old_members_eventor[competitor.eventorID]
-        competitor.si_fkeys = {}
-        for sinr in competitor.SInrs:
-            siobj = Si.objects.get(si=int(sinr))
-            competitor.si_fkeys[int(sinr)] = siobj
-        # FIXME upsert in case of name/email change?
-    for person, member in zip(new_persons, new_members):
-        member.si_fkeys = {}
-        for sinr in member.SInrs:
-            si = Si(si=int(sinr), person=person)
-            si.save()
-            member.si_fkeys[int(sinr)] = si
-    
-    return old_members, new_members
-
-
-if __name__ == '__main__':
-    initialize()
