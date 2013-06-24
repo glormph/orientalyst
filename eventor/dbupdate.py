@@ -1,33 +1,12 @@
 # vim: set fileencoding=utf-8 :
 import sys, os, string, random
-import eventorobjects, constants
+import constants
 from olstats import settings
 from django.core.management import setup_environ
 setup_environ(settings)
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordResetForm
 from graphs.models import Person, Event, Classrace, PersonRun, Result, Si,Split 
-
-def update():
-    data = eventorobjects.EventorData()
-    data.competitors = data.getCompetitors()
-    old_members, new_members = update_db_persons(data)
-    for person in new_members[:1]:
-        resultxml = data.getResults(person)
-        data.parseResults(person, resultxml)
-    password_reset_for_new_users(new_members)
-    for person in old_members[:1]:
-        resultxml = data.getResults(person, days=7) 
-        data.parseResults(person, resultxml)
-    
-    data.finalize() # modifies classraces into a list instead of convolutd dict
-    
-    events = update_events(data.events)
-    update_classraces(events, data.classraces)
-    update_results(data.classraces)
-    update_splits()
-    update_personruns()
-
 
 def update_db_persons(data):
     """Feed downloaded eventor data, db will be updated with persons."""

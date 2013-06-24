@@ -9,7 +9,7 @@ Replace this with more appropriate tests for your application.
 """
 import os, copy, json
 from lxml import etree
-import mocks
+import mocks, eventorobjects
 import dbupdate as iu
 from django.test import TestCase
 from graphs.models import Person, Si, Event, Classrace, Result, Split, PersonRun
@@ -53,10 +53,10 @@ class PersonUpdateOldMembersTest(TestCase):
     def setUp(self):
         with open('eventor/fixtures/test_competitors.json') as fp:
             personfixtures = json.load(fp)
-        self.eventordata = iu.eventorobjects.EventorData()
+        self.eventordata = eventorobjects.EventorData()
         self.eventordata.competitors = []
         for fix in personfixtures:
-            comp = iu.eventorobjects.ClubMember()
+            comp = eventorobjects.ClubMember()
             for attr in fix['attributes']:
                 setattr(comp, attr, fix['attributes'][attr])
             self.eventordata.competitors.append(comp)
@@ -75,7 +75,7 @@ class PersonUpdateOldMembersTest(TestCase):
 class PersonUpdateNewMembersTest(TestCase):
     fixtures = ['auth_user_testdata.json', 'graphs_person_testdata.json']
     def setUp(self):
-        self.eventordata = iu.eventorobjects.EventorData()
+        self.eventordata = eventorobjects.EventorData()
         self.eventordata.competitors = [
             mocks.BaseMock( SInrs = ['123'],
                             firstname = 'Pelle',
