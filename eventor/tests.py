@@ -10,7 +10,7 @@ Replace this with more appropriate tests for your application.
 import os, copy, json
 from lxml import etree
 import mocks
-import init_update as iu
+import dbupdate as iu
 from django.test import TestCase
 from graphs.models import Person, Si, Event, Classrace, Result, Split, PersonRun
 
