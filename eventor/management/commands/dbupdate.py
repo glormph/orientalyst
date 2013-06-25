@@ -1,11 +1,11 @@
 from django.core.management.base import BaseCommand, CommandError
 from eventor import dbupdate, eventorobjects
 
-class DbUpdateCommand(BaseCommand):
+class Command(BaseCommand):
     args = ''
     help = 'Downloads new data from eventor, updates database with it'
     
-    def handle(self):
+    def handle(self, *args, **options):
         data = eventorobjects.EventorData()
         self.stdout.write('Downloading competitors from eventor...')
         data.get_people()
