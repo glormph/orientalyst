@@ -116,21 +116,10 @@ class EventorData(object):
         self.events = {}
         self.classraces = {}
            
-    def initialize(self):
-        get_people()
-        get_results()
-
     def get_people(self):
         memberxml = self.download_memberxml()
         self.competitors = self.parse_members(memberxml)
 
-    def get_results(self):
-        for person in self.competitors[0:1]:
-            print 'getting results for {0}'.format(person.firstname)
-            resultxml = self.getResults(person)
-            if resultxml:
-                self.parseResults(person, resultxml)
-    
     def update_results(self, days=7):
         for person in self.competitors:
             self.getResults(person, days)
@@ -312,19 +301,3 @@ class EventorData(object):
                     eventraceids.append(eventrace.find('EventRaceId').text )
         
         return eventraceids
-
-if __name__ == '__main__':
-    # for testing
-    data = EventorData()
-    data.initialize()
-#    import sys
-#    i=0
-#    for er in data.classraces:
-#        i+=1
-#        for cn in data.classraces[er]:
-#            print cn
-#            for pid in data.classraces[er][cn].results:
-#                print data.classraces[er][cn].results[pid]['firstname'],data.classraces[er][cn].results[pid]['familyname'], len(data.classraces[er][cn].results[pid]['splits'])
-#        if i>5:
-#            sys.exit()
-
