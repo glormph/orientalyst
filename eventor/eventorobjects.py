@@ -19,7 +19,7 @@ class ClubMember(object):
         self.email = None
         self.eventorID = None
         self.classraces = {}
-        if xml:
+        if xml is not None:
             self.parsePersonXML(xml)
 
     def parsePersonXML(self, person):
@@ -78,7 +78,6 @@ class ClassRace(object):
         self.addResults(result, personid)
     
     def addResults(self, result, personid):
-#        print self.results[personid]['firstname'], self.results[personid]['familyname']
         try:
             self.results[personid]['position'] = result.find('ResultPosition').text
         except:
@@ -86,7 +85,6 @@ class ClassRace(object):
         try: # strange, if there isn't time, there is no last split either?
             self.results[personid]['time'] = result.find('Time').text
         except:
-            #print self.results[personid]['firstname'], self.results[personid]['familyname'], self.event.eventorID, self.eventraceid
             self.results[personid]['time'] = ''
 
         self.results[personid]['status'] = result.find('CompetitorStatus').attrib['value']
@@ -243,7 +241,6 @@ class EventorData(object):
         for raceid in ids_toparse[::-1]:
             if raceid in self.classraces and classname in self.classraces[raceid]:
                 ids_toparse.pop(ids_toparse.index(raceid) )
-                #print ids_toparse, len(ids_toparse)
         
         if not ids_toparse:
             return started # no need to do anything, attach races in started to person
@@ -263,12 +260,11 @@ class EventorData(object):
                         continue
                         
                     # check if there is no existing classrace made -> make new one. 
-                    # necessary because personresults are iteraded through.
+                    # necessary because personresults are iterated through.
                     if eventraceid not in self.classraces:
                         self.classraces[eventraceid] = {}
                     if classname not in self.classraces[eventraceid]:
                         racetype = eventrace.attrib['raceDistance']
-                        print racetype, type(racetype)
                         light = eventrace.attrib['raceLightCondition']
                         name = eventrace.find('Name').text
                         date = eventrace.find('RaceDate').find('Date').text

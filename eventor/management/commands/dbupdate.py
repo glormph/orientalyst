@@ -24,10 +24,15 @@ class Command(BaseCommand):
                 data.parseResults(person, resultxml)
         data.finalize() # modifies classraces into a list instead of convolutd dict
         self.stdout.write('Updating database...')
+        self.stdout.write('Events...')
         events = dbupdate.update_events(data.events)
+        self.stdout.write('Races...')
         dbupdate.update_classraces(events, data.classraces)
+        self.stdout.write('Results...')
         dbupdate.update_results(data.classraces)
+        self.stdout.write('Splits...')
         dbupdate.update_splits(data.classraces)
+        self.stdout.write('PersonRuns...')
         dbupdate.update_personruns(data)
 
         self.stdout.write('All done!')
