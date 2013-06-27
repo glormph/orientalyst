@@ -1,9 +1,6 @@
 # vim: set fileencoding=utf-8 :
 import sys, os, string, random
 import constants
-from olstats import settings
-from django.core.management import setup_environ
-setup_environ(settings)
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordResetForm
 from graphs.models import Person, Event, Classrace, PersonRun, Result, Si,Split 
@@ -264,7 +261,7 @@ def update_splits(classraces): #FIXME
     Split.objects.bulk_create(newsplits)
 
 
-def update_personrun(eventordata):
+def update_personruns(eventordata):
     """Updates who-runs-what table"""
 
     # first make person_run objects in eventordata

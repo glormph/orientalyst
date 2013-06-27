@@ -15,12 +15,12 @@ class Command(BaseCommand):
         ' while)...')
         for person in new_members[:1]:
             resultxml = data.getResults(person)
-            if resultxml:
+            if resultxml is not None:
                 data.parseResults(person, resultxml)
         dbupdate.password_reset_for_new_users(new_members)
         for person in old_members[:1]:
             resultxml = data.getResults(person, days=7)
-            if resultxml:
+            if resultxml is not None:
                 data.parseResults(person, resultxml)
         data.finalize() # modifies classraces into a list instead of convolutd dict
         self.stdout.write('Updating database...')
