@@ -26,13 +26,13 @@ class Si(models.Model):
 
 class Event(models.Model):
     name = models.CharField(max_length=100)
-    startdate = models.DateTimeField(null=True)
+    startdate = models.DateField(null=True)
     eventor_id = models.IntegerField(null=True)
 
 
 class Classrace(models.Model):
     event = models.ForeignKey(Event)
-    startdate = models.DateTimeField(null=True)
+    startdate = models.DateField(null=True)
     classname = models.CharField(max_length=20)
     racetype = models.CharField(max_length=40)
     lightcondition = models.CharField(max_length=40)
