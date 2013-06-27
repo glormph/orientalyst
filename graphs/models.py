@@ -49,8 +49,8 @@ class PersonRun(models.Model):
 class Result(models.Model):
     classrace = models.ForeignKey(Classrace)
     person_eventor_id = models.CharField(max_length=20)
-    firstname = models.CharField(max_length=100)
-    lastname = models.CharField(max_length=100)
+    firstname = models.CharField(max_length=100, null=True)
+    lastname = models.CharField(max_length=100, null=True)
     position = models.IntegerField(null=True)
     time = models.CharField(max_length=20)
     status = models.CharField(max_length=40)
