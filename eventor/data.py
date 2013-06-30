@@ -1,5 +1,5 @@
 import os, string, random, logging, datetime, urllib2
-import eventor, constants
+import connections, constants
 from lxml import etree
 
 log = logging.getLogger(__name__)
@@ -113,7 +113,7 @@ class EventorData(object):
     def __init__(self):
         self.events = {}
         self.classraces = {}
-        self.connection = eventor.EventorConnection()
+        self.connection = connections.EventorConnection()
            
     def get_competitors(self, personid=None):
         memberxml = self.connection.download_all_members()

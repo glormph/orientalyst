@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-from eventor import dbupdate, eventorobjects, eventor
+from eventor import dbupdate, data
 from optparse import make_option
 
 
@@ -13,7 +13,7 @@ class Command(BaseCommand):
         (make_option('--period', '-t', type='int', default=None, dest='period'))
 
     def handle(self, *args, **options):
-        self.data = eventorobjects.EventorData()
+        self.data = data.EventorData()
         
         # FIXME check if options are ok
         # set amount of past days to download results from
