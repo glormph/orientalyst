@@ -113,14 +113,31 @@ class EventorData(object):
     def __init__(self):
         self.events = {}
         self.classraces = {}
+        self.connection = eventor.EventorConnection()
            
-    def get_people(self):
-        memberxml = self.download_memberxml()
-        self.competitors = self.parse_members(memberxml)
-
-    def update_results(self, days=7):
-        for person in self.competitors:
-            self.getResults(person, days)
+    def get_competitors(self, personid=None):
+        memberxml = self.connection.download_all_members()
+        clubmembers = self.filter_competitor(memberxml, personid)
+        # FIXME handle clubmembers==False error
+        self.competitors = self.add_competition_data(clubmembers)
+    
+    def get_results(self, members, events=None, period=None):
+        for member in members:
+            resultxml = self.connection.download_results(member, days=period,
+                                            events=events)
+            if resultxml is not None:
+                data.parse_results(member, resultxml)
+    
+    def filter_competitor(self, memberxml, eventorid):
+        if eventorid==None:
+            return [ClubMember(x) for x in memberxml]
+        else:
+            for member in memberxml:
+                cm = ClubMember(member)
+                if cm.eventorID == eventorid:
+                    return = [member]
+            # loop falls through, error:
+            return False
     
     def finalize(self):
         """Format some data for easy access by db module"""
@@ -135,47 +152,16 @@ class EventorData(object):
                 cr.results[pid]['splits'] = [{'split_n': x,
                                              'time': cr.results[pid]['splits'][x]}\
                                             for x in cr.results[pid]['splits']]
-    
-    def download_memberxml(self):
-        return eventor.eventorAPICall(constants.API_KEY,
-            'persons/organisations/636?includeContactDetails=true' )
 
-    def parse_members(self, clubmembersxml):
+    def add_competition_data(self, clubmembers):
         competitors = []
-        for person in clubmembersxml[0:10]: 
-            # one call per competitor, slow
-            clubmember = ClubMember(person)
-            try:
-                competitorxml = eventor.eventorAPICall(constants.API_KEY,
-            'competitor/{0}'.format(clubmember.eventorID) )
-            except urllib2.HTTPError:
-                pass # not a competitor, only a member, skip.
-            else:
-                clubmember.parse_competitiondetails(competitorxml) 
+        for clubmember in clubmembers:
+            compxml = self.connection.download_competition_data(clubmember.eventorID)
+            clubmember.parse_competitiondetails(compxml) 
             competitors.append(clubmember)
         return competitors
         
-    def getResults(self, person, days=None):
-        # APIcall to get results for a person
-        url = 'results/person?personId={0}&top=1000&includeSplitTimes=true'.format(person.eventorID)
-        if days:
-            # Specify whether to get all results or the ones from a certain date
-            now = datetime.datetime.now()
-            fromdate = now - datetime.timedelta(days)
-            url = '{0}&fromDate={1}-{2}-{3}'.format(url, str(fromdate.year),
-                    str(fromdate.month).zfill(2), str(fromdate.day).zfill(2) )
-        try:
-            results = eventor.eventorAPICall(constants.API_KEY, url)
-        except urllib2.HTTPError, e:
-            # FIXME figure out when error occurs
-            print 'Error occurred in communication with eventor server'
-            print e
-            return None
-        else:
-            return results
-
-    def parseResults(self, person, results):
-        print 'Parsing results'
+    def parse_results(self, person, results):
         if results.tag == 'ResultListList':
             for resultlist in results:
                 self.parseResultList(resultlist, person)
