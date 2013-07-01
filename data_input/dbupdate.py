@@ -5,18 +5,20 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordResetForm
 from graphs.models import Person, Event, Classrace, PersonRun, Result, Si,Split 
 
+def get_old_members(data):
+    old_persons = Person.objects.all().filter(eventor_id__in=[x.eventorID \
+                for x in data.competitors])
+    eventorid_person_lookup = {str(x.eventor_id): x for x in old_persons}
+    old_members = [x for x in data.competitors if x.eventorID in
+                        eventorid_person_lookup]
+    return old_members, eventorid_person_lookup
+
 def update_db_persons(data):
     """Feed downloaded eventor data, db will be updated with persons."""
     new_members, new_persons = [], []
-
-    old_persons = Person.objects.all().filter(eventor_id__in=[x.eventorID \
-                for x in data.competitors])
-    
-    old_members_eventor = {str(x.eventor_id): x for x in old_persons}
-    old_members = [x for x in data.competitors if x.eventorID in
-                        old_members_eventor]
+    old_members, eventorid_person_lookup = get_old_members(data)
     for competitor in data.competitors:
-        if competitor.eventorID not in old_members_eventor:
+        if competitor not in old_members:
             # first get user account since it needs to exist before updating db
             useraccount = create_user_account(competitor)
             person = Person(eventor_id=competitor.eventorID,
@@ -29,7 +31,7 @@ def update_db_persons(data):
 
     for competitor in old_members:
         # add person and sinr django objects to competitors
-        competitor.person_fkey = old_members_eventor[competitor.eventorID]
+        competitor.person_fkey = eventorid_person_lookup[competitor.eventorID]
         competitor.si_fkeys = {}
         for sinr in competitor.SInrs:
             siobj = Si.objects.get(si=int(sinr))

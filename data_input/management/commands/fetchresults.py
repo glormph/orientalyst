@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-from eventor import dbupdate, data
+from data_input import dbupdate, data
 from optparse import make_option
 
 
@@ -11,6 +11,7 @@ class Command(BaseCommand):
         (make_option('--event', '-e', type='int', default=None, dest='events',
                         action="append")) +
         (make_option('--period', '-t', type='int', default=None, dest='period'))
+        (make_option('--onlyold', '-o', action='store_true', dest='onlyold'))
 
     def handle(self, *args, **options):
         self.data = data.EventorData()
@@ -24,26 +25,33 @@ class Command(BaseCommand):
 
         if None not in [options['events'], options['period']]:
             pass # TODO error here
+        if options['onlyold'] is True and \
+                [options['events'], options['period'], 
+                options['competitor']]!=[None, None, None]:
+            pass # TODO error here, onlyold cannot be combined with other options
+        
         elif options['period'] is not None:
             oldperiod = options['period'] # newperiod should always be None?
             # better if no new people are fetched when updating w period.
-
+        
         self.stdout.write('Downloading competitors from eventor...')
-            self.data.get_competitors(options['competitor'])
-            # FIXME check if problems with competitor download
-            # if none downloaded, stop here (wrong ev_id, connection problems)
-
+        self.data.get_competitors(options['competitor'])
+        # FIXME check if problems with competitor download
+        # if none downloaded, stop here (wrong ev_id, connection problems)
+        if options['onlyold'] is False:
             self.stdout.write('Updating person database...')
             old_members, new_members = dbupdate.update_db_persons(data)
             # FIXME new members and personid?
-            self.stdout.write('Downloading results data from eventor (may take a'
-            ' while)...')
-
-            self.data.get_results(new_members, events=options['events'],
+        else:
+            self.stdout.write('Only old members, skipping person database update...')
+            old_members, new_members = dbupdate.get_old_members(data)[0], []
+        
+        self.stdout.write('Downloading results data from eventor (may take a'
+               ' while)...')
+        self.data.get_results(new_members, events=options['events'],
                                     period=newperiod)
         self.data.get_results(old_members, event=options['events'],
                                 period=oldperiod)
-
         dbupdate.password_reset_for_new_users(new_members)
         self.update_db()
     
