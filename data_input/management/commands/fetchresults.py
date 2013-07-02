@@ -6,12 +6,14 @@ from optparse import make_option
 class Command(BaseCommand):
     args = ''
     help = 'Downloads new data from eventor, updates database with it'
-    option_list = BaseCommand.option_list +  
-        (make_option('--competitor', '-c', type='int', default=None, dest='competitor')) +
-        (make_option('--event', '-e', type='int', default=None, dest='events',
-                        action="append")) +
-        (make_option('--period', '-t', type='int', default=None, dest='period'))
-        (make_option('--onlyold', '-o', action='store_true', dest='onlyold'))
+    option_list = BaseCommand.option_list + (
+        make_option('--competitor', '-c', type='int', 
+            default=None, dest='competitor'),) + (
+        make_option('--event', '-e', type='int', default=None, dest='events',
+                        action="append"), ) + (
+        make_option('--period', '-t', type='int', default=None,
+                        dest='period'),) + (
+        make_option('--onlyold', '-o', action='store_true', dest='onlyold'),)
 
     def handle(self, *args, **options):
         self.data = data.EventorData()
@@ -70,21 +72,3 @@ class Command(BaseCommand):
         self.stdout.write('PersonRuns...')
         dbupdate.update_personruns(self.data)
         self.stdout.write('All done!')
-
-    def handle_person(self, person):
-        # get person and update person table
-        # call to get results of person
-        # parseResults
-        # if new member, create password
-        # finalize
-        # update all things
-
-    def handle_event(self, event):
-        # get all people as usual
-        # call eventor getResults, make it only get event
-        # finalize
-        # update all
-
-    def handle_period(self, event):
-        # call eventor api for a period only
-        # update all things

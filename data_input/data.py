@@ -116,7 +116,8 @@ class EventorData(object):
         self.connection = connections.EventorConnection()
            
     def get_competitors(self, personid=None):
-        memberxml = self.connection.download_all_members()
+        memberxml = \
+            self.connection.download_all_members(constants.ORGANISATION_ID)
         clubmembers = self.filter_competitor(memberxml, personid)
         # FIXME handle clubmembers==False error
         self.competitors = self.add_competition_data(clubmembers)
@@ -135,7 +136,7 @@ class EventorData(object):
             for member in memberxml:
                 cm = ClubMember(member)
                 if cm.eventorID == eventorid:
-                    return = [member]
+                    return [member]
             # loop falls through, error:
             return False
     

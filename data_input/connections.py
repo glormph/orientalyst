@@ -31,7 +31,7 @@ class EventorConnection(object):
         self.apicall = 'persons/organisations/{0}?includeContactDetails=true'.format(orgnr)
         return self.download()
     
-    def download_competition_data(self, eventor_id) 
+    def download_competition_data(self, eventor_id): 
         self.apicall = 'competitor/{0}'.format(eventor_id)
         return self.download()
 
