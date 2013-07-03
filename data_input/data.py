@@ -1,7 +1,7 @@
 import os, string, random, logging, datetime, urllib2
 import connections, constants
 from lxml import etree
-
+from urllib2 import HTTPError
 log = logging.getLogger(__name__)
 
 # how to do relays? --> teamresult instead of personresult
@@ -157,9 +157,14 @@ class EventorData(object):
     def add_competition_data(self, clubmembers):
         competitors = []
         for clubmember in clubmembers:
-            compxml = self.connection.download_competition_data(clubmember.eventorID)
-            clubmember.parse_competitiondetails(compxml) 
-            competitors.append(clubmember)
+            try:
+                compxml = self.connection.download_competition_data(clubmember.eventorID)
+            except HTTPError, e:
+                if e.code == 404: # no data in eventor on certain competitor
+                    continue
+            else:
+                clubmember.parse_competitiondetails(compxml) 
+                competitors.append(clubmember)
         return competitors
         
     def parse_results(self, person, results):
