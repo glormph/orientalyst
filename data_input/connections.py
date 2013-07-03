@@ -9,24 +9,12 @@ class EventorConnection(object):
         self.baseurl = 'https://eventor.orientering.se/api'
         self.apikey = constants.API_KEY
     
-    def get_request(self):
+    def download(self):
         url = os.path.join(self.baseurl, self.apicall)
         request = urllib2.Request(url, headers={'ApiKey': self.apikey} )
         xml = urllib2.urlopen(request).read()
         return etree.fromstring(xml)
 
-    def download(self):
-        try:
-            results = self.get_request()
-        except urllib2.HTTPError, e:
-            # FIXME figure out when error occurs
-            # FIXME respect 404, 500, 403, 401, etc, in e.code
-            print 'Error occurred in communication with eventor server'
-            print e
-            return None
-        else:
-            return results
-    
     def download_all_members(self, orgnr):
         self.apicall = 'persons/organisations/{0}?includeContactDetails=true'.format(orgnr)
         return self.download()
