@@ -34,7 +34,8 @@ def update_db_persons(data):
         competitor.person_fkey = eventorid_person_lookup[competitor.eventorID]
         competitor.si_fkeys = {}
         for sinr in competitor.SInrs:
-            siobj = Si.objects.get(si=int(sinr))
+            siobj = Si.objects.get(si=int(sinr), 
+                person_id=eventorid_person_lookup[competitor.eventorID])
             competitor.si_fkeys[int(sinr)] = siobj
         # FIXME upsert in case of name/email change?
     for person, member in zip(new_persons, new_members):
