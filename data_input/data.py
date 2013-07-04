@@ -35,7 +35,9 @@ class ClubMember(object):
         ccards = xml.findall('.//CCard')
         for ccard in ccards:
             if ccard.find('PunchingUnitType').attrib['value'] == 'SI':
-                self.SInrs.append(ccard.find('CCardId').text)
+                sinr = ccard.find('CCardId').text
+                if sinr not in self.SInrs:
+                    self.SInrs.append(sirnr)
 
 class Event(object):
     def __init__(self, eventxml, eventid):
