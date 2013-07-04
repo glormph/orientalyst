@@ -13,7 +13,7 @@ class Command(BaseCommand):
                         action="append"), ) + (
         make_option('--period', '-t', type='int', default=None,
                         dest='period'),) + (
-        make_option('--onlyold', '-o', action='store_true', dest='onlyold'),)
+        make_option('--onlyold', '-o', action='store_true', default=False, dest='onlyold'),)
 
     def handle(self, *args, **options):
         self.eventordata = data.EventorData()
@@ -53,7 +53,7 @@ class Command(BaseCommand):
                ' while)...')
         self.eventordata.get_results(new_members, events=options['events'],
                                     period=newperiod)
-        self.eventordata.get_results(old_members, event=options['events'],
+        self.eventordata.get_results(old_members, events=options['events'],
                                 period=oldperiod)
         dbupdate.password_reset_for_new_users(new_members)
         self.update_db()

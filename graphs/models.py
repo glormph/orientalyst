@@ -6,11 +6,6 @@ class UserProfile(models.Model):
     user = models.ForeignKey(User)
     eventor_id = models.IntegerField()
 
-class UrlLogin(models.Model):
-    user = models.ForeignKey(User)
-    randomid = models.CharField(max_length=30)
-    timestamp = models.DateTimeField()
-    firsttime = models.BooleanField()
 
 class Person(models.Model):
     eventor_id = models.IntegerField()
