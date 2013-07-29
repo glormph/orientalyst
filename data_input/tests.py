@@ -220,7 +220,7 @@ class UpdateClassraces(TestCase):
 
     def test_update_old_classrace(self):
         updatedcr = copy.deepcopy(self.oldcr)
-        updatedcr.lightcondition = 'updated light'
+        updatedcr.racetype = 'updated racetype'
         allcrs_before = [x for x in Classrace.objects.all()]
         iu.update_classraces([self.firsteventrace], [updatedcr])
         allcrs_after = [x for x in Classrace.objects.all()]
@@ -242,7 +242,8 @@ class UpdateClassraces(TestCase):
 
 
 class UpdateResults(TestCase):
-    fixtures = ['graphs_classrace_testdata.json', 'graphs_events_testdata.json',  'graphs_result_testdata.json']
+    fixtures = ['graphs_classrace_testdata.json',
+    'graphs_eventrace_testdata.json', 'graphs_events_testdata.json',  'graphs_result_testdata.json']
 
     def setUp(self):
         self.results_before = [x for x in Result.objects.all()]
@@ -284,7 +285,7 @@ class UpdateResults(TestCase):
         assert len(self.results_before) == len(results_after) - 1
 
 class UpdateSplit(TestCase):
-    fixtures = ['graphs_classrace_testdata.json',
+    fixtures = ['graphs_classrace_testdata.json', 'graphs_eventrace_testdata',
     'graphs_events_testdata.json',  'graphs_result_testdata.json',
     'graphs_split_testdata.json']
 
@@ -323,7 +324,7 @@ class UpdateSplit(TestCase):
 
 class UpdatePersonRun(TestCase):
     fixtures = ['graphs_person_testdata.json', 'graphs_classrace_testdata.json',
-    'graphs_events_testdata.json', 'graphs_personrun_testdata.json',
+    'graphs_eventrace_testdata', 'graphs_events_testdata.json', 'graphs_personrun_testdata.json',
     'graphs_si_testdata.json', 'auth_user_testdata.json']
     
     def setUp(self):
@@ -340,7 +341,7 @@ class UpdatePersonRun(TestCase):
             competitors = [competitor],
             classraces = [self.aclassrace])
 
-        iu.update_personrun(edata)
+        iu.update_personruns(edata)
         assert self.oldentries == [x for x in PersonRun.objects.all()]
 
     def test_newpersonrun(self):
@@ -355,6 +356,6 @@ class UpdatePersonRun(TestCase):
         edata = mocks.BaseMock(
             competitors = [competitor],
             classraces = [self.aclassrace])
-        iu.update_personrun(edata)
+        iu.update_personruns(edata)
         assert len(self.oldentries) == len([x for x in \
                 PersonRun.objects.all()]) -1
