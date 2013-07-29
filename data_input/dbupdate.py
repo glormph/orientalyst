@@ -3,7 +3,8 @@ import sys, os, string, random
 import constants
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordResetForm
-from graphs.models import Person, Event, Classrace, PersonRun, Result, Si,Split 
+from graphs.models import Person, Event, EventRace, Classrace, PersonRun, \
+                        Result, Si, Split 
 
 def get_old_members(data):
     old_persons = Person.objects.all().filter(eventor_id__in=[x.eventorID \
@@ -142,27 +143,27 @@ def update_events(events):
     all_events.extend(list(old_events))
     return all_events
 
+
+def update_eventraces():
+   pass 
+
 def update_classraces(events, classraces):
     # get classraces in db
-    cr_indb = Classrace.objects.filter(event__in=[x for x in
+    cr_indb = Classrace.objects.filter(eventrace__in=[x for x in
                 events])
+    
+    # classraces have no eventorid, which is silly. Instead, there is a
+    # eventraceid which is an id for all races of a given competition(day). We
+    # assume each classname only races once per eventrace.
     
     # first create a dict containing pks for lookup and a tuple of the object and a
     # dict with relevant fields for classrace comparison
-    cr_indb_dict = { x.pk: ( x, {'name': x.name, 'event': x.event, 
-                    'classname': x.classname, 'racetype': x.racetype} ) for x in cr_indb }
-    
+    cr_indb_dict = { x.pk: ( x, {'eventrace': x.eventrace, 
+                    'classname': x.classname} ) for x in cr_indb }
     # filter downloaded classraces with/without db entry
-    # since they have no eventorID, we use instead a combination of
-    # event, name, classname and racetype
-    # PROBLEM: this means these cannot be updated since they are used as
-    # lookup! This may present a problem when updating eg classrace name
-    # FIXME think about which identifiers to use. date?
-    
     for cr in classraces:
-        cr.eventfkey = cr.event.eventfkey
-        cr_idfields = {'name': cr.name, 'event': cr.eventfkey,
-            'classname' : cr.classname, 'racetype': cr.racetype}
+        cr.erace_fkey = cr.eventrace.eventracefkey
+        cr_idfields = {'eventrace': cr.erace_fkey, 'classname' : cr.classname }
         is_newcr = True
         for pk in cr_indb_dict:
             if cr_idfields == cr_indb_dict[pk][1]:
@@ -170,17 +171,13 @@ def update_classraces(events, classraces):
                 # update old classrace
                 cr.classrace_fkey = cr_indb_dict[pk][0]
                 update_db_entry(cr.classrace_fkey, cr,
-                        ['event', 'startdate', 'classname', 'racetype',
-                                            'lightcondition', 'name'],
-                        ['eventfkey', 'date', 'classname', 'racetype', 'lightcondition',
-                                            'name'])
+                        ['eventrace', 'classname', 'racetype'],
+                        ['erace_fkey', 'classname', 'racetype'])
                 break
         if is_newcr:
             classrace = generate_db_entry(Classrace, cr,
-                ['event', 'startdate', 'classname', 'racetype',
-                                        'lightcondition', 'name'],
-                ['eventfkey', 'date', 'classname', 'racetype',
-                                        'lightcondition', 'name'])
+                ['eventrace', 'classname', 'racetype'],
+                ['erace_fkey', 'classname', 'racetype'])
             classrace.save()
             cr.classrace_fkey = classrace
 

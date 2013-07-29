@@ -1,4 +1,4 @@
-import os, string, random, logging, datetime, urllib2
+import os, string, random, logging, urllib2
 import connections, constants
 from lxml import etree
 from urllib2 import HTTPError
@@ -6,8 +6,8 @@ log = logging.getLogger(__name__)
 
 # how to do relays? --> teamresult instead of personresult
 # how many competitorstatus are there? OK, didnotstart, ...
-
-# i think the problem is in that classraces are created and then dumped
+# currently person-based. Every person results are parsed. Should make it so
+# that we only download once per event
 
 # error handling of not found elements
 
@@ -37,7 +37,7 @@ class ClubMember(object):
             if ccard.find('PunchingUnitType').attrib['value'] == 'SI':
                 sinr = ccard.find('CCardId').text
                 if sinr not in self.SInrs:
-                    self.SInrs.append(sirnr)
+                    self.SInrs.append(sinr)
 
 class Event(object):
     def __init__(self, eventxml, eventid):
@@ -48,17 +48,22 @@ class Event(object):
         self.finishdate = eventxml.find('FinishDate').find('Date').text
 
 
-class ClassRace(object):
-    def __init__(self, event, classname, eventraceid, name, date, racetype='',
-    distance='', lightcondition=''):
+
+class EventRace(object):
+    def __init__(self, event, eventraceid, name, date, lightcondition=''):
         self.event = event
-        self.classname = classname
         self.eventraceid = eventraceid
         self.name = name # e.g. 'Etapp 1'
         self.date = date
+        self.lightcondition = lightcondition
+
+
+class ClassRace(object):
+    def __init__(self, eventrace, classname, distance='', racetype=''):
+        self.eventrace = eventrace
+        self.classname = classname
         self.racetype = racetype
         self.distance = distance
-        self.lightcondition = lightcondition
         self.results = {}
         self.checkpoints = {}
      
@@ -114,6 +119,7 @@ class ClassRace(object):
 class EventorData(object):
     def __init__(self):
         self.events = {}
+        self.eventraces = {}
         self.classraces = {}
         self.connection = connections.EventorConnection()
            
@@ -129,7 +135,7 @@ class EventorData(object):
             resultxml = self.connection.download_results(member, days=period,
                                             events=events)
             if resultxml is not None:
-                data.parse_results(member, resultxml)
+                self.parse_results(member, resultxml)
     
     def filter_competitor(self, memberxml, eventorid):
         if eventorid==None:
@@ -201,39 +207,42 @@ class EventorData(object):
                 attach_ids = self.parseRaceResults(personresults, eventraceids, \
                             clubmember.eventorID, event, classname) # multiday -> multiple classraces!!
                 for raceid in attach_ids:
-                    self.attachRaceToObject(self.classraces[raceid][classname], clubmember)
+                    self.attachRaceToObject(self.classraces[raceid][classname],
+                                        raceid, clubmember)
                 
             else:
                 eventraceid = eventclassinfo.find('.//EventRaceId').text
-                if eventraceid not in self.classraces:
+                if eventraceid not in self.eventraces:
                     self.classraces[eventraceid] = {}
+                    self.eventraces[eventraceid] = EventRace(event,
+                        eventraceid, event.name, event.startdate, lightcondition)
                 if classname not in self.classraces[eventraceid]:
                     # create new classrace
-                    self.classraces[eventraceid][classname] = ClassRace(event, \
-                            classname, eventraceid, event.name, event.startdate)
+                    cr = ClassRace(self.eventraces[eventraceid], classname)
                     # add splittimes
                     for personresult in personresults:
-                        self.classraces[eventraceid][classname].splitsFromSingleResults(personresult)
-                    # attach to event
-                    self.attachRaceToObject(self.classraces[eventraceid][classname], event)
+                        cr.splitsFromSingleResults(personresult)
+                    # attach to eventrace
+                    self.attachRaceToObject(cr, eventraceid, eventrace)
+                    self.classraces[eventraceid][classname] = cr 
                 # and attach to clubmember
-                self.attachRaceToObject(self.classraces[eventraceid][classname], clubmember)
+                self.attachRaceToObject(self.classraces[eventraceid][classname],
+                                    eventraceid, clubmember)
     
-    def attachRaceToObject(self, classrace, obj):
+    def attachRaceToObject(self, classrace, eventraceid, obj):
         """Attaches classrace to an object: event, person, etc """
-        if classrace.eventraceid not in obj.classraces:
-            obj.classraces[classrace.eventraceid] = {}
-        obj.classraces[classrace.eventraceid][classrace.classname] = classrace
+        # Is attaching necessary?
+        if eventraceid not in obj.classraces:
+            obj.classraces[eventraceid] = {}
+        obj.classraces[eventraceid][classrace.classname] = classrace
         return
-       
-        self.events[eventid] = event # replace updated event
         
     def parseRaceResults(self, personresults, raceids, competitorid, event, classname):
         # gather which classraces should be parsed
         ids_toparse = self.checkCompetitorStartInRace(personresults, competitorid)
         started = ids_toparse[:]
         for raceid in ids_toparse[::-1]:
-            if raceid in self.classraces and classname in self.classraces[raceid]:
+            if raceid in self.eventraces and classname in self.classraces[raceid]:
                 ids_toparse.pop(ids_toparse.index(raceid) )
         
         if not ids_toparse:
@@ -255,18 +264,20 @@ class EventorData(object):
                         
                     # check if there is no existing classrace made -> make new one. 
                     # necessary because personresults are iterated through.
-                    if eventraceid not in self.classraces:
-                        self.classraces[eventraceid] = {}
-                    if classname not in self.classraces[eventraceid]:
-                        racetype = eventrace.attrib['raceDistance']
+                    if eventraceid not in self.eventraces:
                         light = eventrace.attrib['raceLightCondition']
                         name = eventrace.find('Name').text
                         date = eventrace.find('RaceDate').find('Date').text
+                        self.eventraces[eventraceid] = EventRace(event,
+                                        eventraceid, name, date, light)
+                        self.classraces[eventraceid] = {}
+                    if classname not in self.classraces[eventraceid]:
+                        racetype = eventrace.attrib['raceDistance']
                         # make new classrace, attach to event
-                        self.classraces[eventraceid][classname] = ClassRace(event, classname, \
-                                eventraceid, name, date, racetype, lightcondition=light)
-                        self.attachRaceToObject(self.classraces[eventraceid][classname], \
-                                event)
+                        self.classraces[eventraceid][classname] = \
+                                 ClassRace(self.eventraces[eventraceid], classname, racetype=racetype)
+                        self.attachRaceToObject(self.classraces[eventraceid][classname],
+                                    eventraceid, eventrace)
                     # add splits
                     self.classraces[eventraceid][classname].splitsFromRaceResult(raceresult, personid, person)
             return started # returned list with raceids to attach to person 

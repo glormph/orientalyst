@@ -12,7 +12,7 @@ from lxml import etree
 import mocks, data
 import dbupdate as iu
 from django.test import TestCase
-from graphs.models import Person, Si, Event, Classrace, Result, Split, PersonRun
+from graphs.models import Person, Si, Event, EventRace, Classrace, Result, Split, PersonRun
 
 class PasswordResetNewUserTest(TestCase):
     fixtures = ['auth_user_testdata.json', 'graphs_person_testdata.json']
@@ -51,7 +51,7 @@ class PersonUpdateOldMembersTest(TestCase):
     fixtures = ['auth_user_testdata.json', 'graphs_person_testdata.json']
 
     def setUp(self):
-        with open('eventor/fixtures/test_competitors.json') as fp:
+        with open('data_input/fixtures/test_competitors.json') as fp:
             personfixtures = json.load(fp)
         self.eventordata = data.EventorData()
         self.eventordata.competitors = []
@@ -154,7 +154,7 @@ class EventUpdate(TestCase):
 
     def setUp(self):
         self.events_in_db = {}
-        with open('eventor/fixtures/graphs_events_testdata.json') as fp:
+        with open('data_input/fixtures/graphs_events_testdata.json') as fp:
             ev_fix = json.load(fp)
         for ev in ev_fix:
             self.events_in_db[ev['fields']['eventor_id']] = \
@@ -198,25 +198,23 @@ class EventUpdate(TestCase):
 
 class UpdateClassraces(TestCase):
     fixtures = ['graphs_events_testdata.json',
-             'graphs_classrace_testdata.json']
+                'graphs_eventrace_testdata.json',
+                'graphs_classrace_testdata.json']
     
     def setUp(self):
         cr_db = Classrace.objects.get(pk=1)
         self.oldcr = mocks.BaseMock(
-           date=cr_db.startdate,
            classname=cr_db.classname,
            racetype=cr_db.racetype,
-           lightcondition=cr_db.lightcondition,
-           name=cr_db.name,
-           event = mocks.BaseMock(
-                eventfkey = cr_db.event)
+           eventrace = mocks.BaseMock(
+                eventracefkey = cr_db.eventrace)
         )
-        self.firstevent = Event.objects.get(pk=1)
+        self.firsteventrace = EventRace.objects.get(pk=1)
         
         
     def test_old_classrace(self):
         allcrs_before = [x for x in Classrace.objects.all()]
-        iu.update_classraces([self.firstevent], [self.oldcr])
+        iu.update_classraces([self.firsteventrace], [self.oldcr])
         allcrs_after = [x for x in Classrace.objects.all()]
         assert allcrs_before == allcrs_after
 
@@ -224,21 +222,21 @@ class UpdateClassraces(TestCase):
         updatedcr = copy.deepcopy(self.oldcr)
         updatedcr.lightcondition = 'updated light'
         allcrs_before = [x for x in Classrace.objects.all()]
-        iu.update_classraces([self.firstevent], [updatedcr])
+        iu.update_classraces([self.firsteventrace], [updatedcr])
         allcrs_after = [x for x in Classrace.objects.all()]
         assert len(allcrs_before) == len(allcrs_after)
         assert allcrs_before != allcrs_after 
 
-    def test_new_classrace_of_empty_event(self):
-        secondevent = Event.objects.get(pk=2)
+    def test_new_classrace_of_empty_eventrace(self):
+        secondeventrace= EventRace.objects.get(pk=2)
         newcr = copy.deepcopy(self.oldcr)
         newcr.classname = 'new classname'
         newcr.racetype = 'short'
-        newcr.event.eventkey = secondevent
+        newcr.eventrace.eventracefkey = secondeventrace
         newcr.name = 'new name'
         
         allcrs_before = [x for x in Classrace.objects.all()]
-        iu.update_classraces([secondevent], [newcr])
+        iu.update_classraces([secondeventrace], [newcr])
         allcrs_after = [x for x in Classrace.objects.all()]
         assert len(allcrs_before) == len(allcrs_after) - 1
 

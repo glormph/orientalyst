@@ -1,0 +1,35 @@
+[
+    {
+        "pk" : 1,
+        "model": "graphs.eventrace",
+        "fields": {
+            "event": 1,
+            "startdate": "2001-03-04",
+            "eventor_id": 12345,
+            "lightcondition": "light",
+            "name": "Sisyphos i skogen"
+        }
+    },
+    {
+        "pk" : 2,
+        "model": "graphs.eventrace",
+        "fields": {
+            "event": 1,
+            "eventor_id": 12346,
+            "startdate": "2001-03-05",
+            "lightcondition": "light",
+            "name": "Poof!"
+        }
+    },
+    {
+        "pk" : 3,
+        "model": "graphs.eventrace",
+        "fields": {
+            "event": 3,
+            "eventor_id": 912346,
+            "startdate": "2001-03-12",
+            "lightcondition": "light",
+            "name": "Eternal roast"
+        }
+    }
+]

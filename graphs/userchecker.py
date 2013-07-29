@@ -1,4 +1,4 @@
-from graphs.models import PersonRun, Person, UrlLogin, Si #, Classrace, Result, Split, Person
+from graphs.models import PersonRun, Person, Si
 
 class User(object):
     def __init__(self, user):

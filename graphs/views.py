@@ -1,5 +1,5 @@
 from django.http import HttpResponse
-from graphs.models import PersonRun, Classrace, Result, Split, Person, UrlLogin
+from graphs.models import PersonRun, Classrace, Result, Split, Person
 from django.shortcuts import get_object_or_404, get_list_or_404, render, redirect
 from django.http import Http404
 from django.contrib.auth.views import password_reset
