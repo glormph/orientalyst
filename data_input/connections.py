@@ -1,4 +1,4 @@
-import os, urllib2, logging
+import os, urllib2, logging, datetime
 from lxml import etree
 import constants
 
