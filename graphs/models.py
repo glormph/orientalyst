@@ -25,13 +25,18 @@ class Event(models.Model):
     eventor_id = models.IntegerField(null=True)
 
 
-class Classrace(models.Model):
+class EventRace(models.Model):
     event = models.ForeignKey(Event)
+    eventor_id = models.IntegerField(null=True)
     startdate = models.DateField(null=True)
-    classname = models.CharField(max_length=20)
     racetype = models.CharField(max_length=40)
     lightcondition = models.CharField(max_length=40)
     name = models.CharField(max_length=200)
+    
+
+class Classrace(models.Model):
+    eventrace = models.ForeignKey(EventRace)
+    classname = models.CharField(max_length=20)
 
 
 class PersonRun(models.Model):
