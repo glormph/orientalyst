@@ -1,3 +1,5 @@
+import data
+
 class MockDjangoObject():
     def __init__(self):
         self.saved = False
@@ -7,7 +9,7 @@ class MockDjangoObject():
         return True
 
 
-class BaseMock():
+class BaseMock(data.BaseData):
     def __init__(self, **kwargs):
         for k in kwargs:
             setattr(self, k, kwargs[k])

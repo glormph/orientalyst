@@ -10,8 +10,19 @@ log = logging.getLogger(__name__)
 # that we only download once per event
 
 # error handling of not found elements
+class BaseData(object):
+    def __init__(self):
+        self.db_obj = None
 
-class ClubMember(object):
+    def attach_django_object(self, obj):
+        self.db_obj = obj
+
+    def get_fkey(self, name):
+        fkey_object = self.fkeys[name]
+        return fkey_object.db_obj
+
+
+class ClubMember(BaseData):
     def __init__(self, xml=None):
         self.SInrs = []
         self.lastname = '' 
@@ -39,7 +50,7 @@ class ClubMember(object):
                 if sinr not in self.SInrs:
                     self.SInrs.append(sinr)
 
-class Event(object):
+class Event(BaseData):
     def __init__(self, eventxml, eventid):
         self.classraces = {}
         self.eventorID = eventid
@@ -48,17 +59,16 @@ class Event(object):
         self.finishdate = eventxml.find('FinishDate').find('Date').text
 
 
-
-class EventRace(object):
+class EventRace(BaseData):
     def __init__(self, event, eventraceid, name, date, lightcondition=''):
-        self.event = event
         self.eventraceid = eventraceid
         self.name = name # e.g. 'Etapp 1'
         self.date = date
         self.lightcondition = lightcondition
+        self.fkeys = {'event': event}
 
 
-class ClassRace(object):
+class ClassRace(BaseData):
     def __init__(self, eventrace, classname, distance='', racetype=''):
         self.eventrace = eventrace
         self.classname = classname
@@ -66,7 +76,8 @@ class ClassRace(object):
         self.distance = distance
         self.results = {}
         self.checkpoints = {}
-     
+        self.fkeys = {'eventrace': eventrace}
+
     def splitsFromSingleResults(self, personresult):
         person = personresult.find('Person')
         try:

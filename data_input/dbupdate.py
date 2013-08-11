@@ -100,52 +100,78 @@ def get_lookup_by_type(d, k):
         out = getattr(d, k)
     return out
 
-def update_db_entry(obj, data, objkeys, datakeys):
+def update_db_entry(obj, data, objattrs, dataattrs, objfkeys=[], datafkeys=[]):
     changed = False
-    for ok,dk in zip(objkeys, datakeys):
+    # check update attributes
+    for ok,dk in zip(objattrs, dataattrs):
         if getattr(obj, ok) != get_lookup_by_type(data, dk):
             setattr(obj, ok, get_lookup_by_type(data, dk))
+            changed = True
+
+    # check updated fkeys
+    for ok,dk in zip(objfkeys, datafkeys):
+        fkey = data.get_fkey(dk)
+        assert fkey is not None
+        if getattr(obj, ok) != fkey:
+            setattr(obj, ok, fkey)
             changed = True
     if changed:
         obj.save()
 
-def generate_db_entry(model, data, objkeys, datakeys):
+def generate_db_entry(model, data, objattrs, dataattrs, objfkeys=[], datafkeys=[]):
     obj = model()
-    for ok,dk in zip(objkeys, datakeys):
+    # set attributes
+    for ok,dk in zip(objattrs, dataattrs):
         setattr(obj, ok, get_lookup_by_type(data, dk))
+    # set fkeys
+    for ok,dk in zip(objfkeys, datafkeys):
+        fkey = data.get_fkey(dk)
+        assert fkey is not None
+        setattr(obj, ok, fkey)
     return obj
 
 
+def update_objects_by_eventor_id(data, model, model_attributes,
+                data_attributes, model_fkeys=[], data_fkeys=[]):
+    old_objs = model.objects.filter(eventor_id__in=[int(x) for x in \
+                    data]) # events is a dict with eventorIDs as keys
+    old_ids = [x.eventor_id for x in old_objs]
+    new_data = {x: data[x] for x in data if x not in \
+                old_ids }
+    
+    # update old objects
+    for obj in old_objs:
+        data_obj = data[obj.eventor_id]
+        update_db_entry(obj, data_obj,  model_attributes,
+                        data_attributes, model_fkeys, data_fkeys)
+
+    # insert new objects
+    all_objs = []
+    for d in new_data.values():
+        obj = generate_db_entry(model, d, model_attributes,
+                            data_attributes, model_fkeys, data_fkeys)
+        obj.save()
+        d.attach_django_object(obj)
+        all_objs.append(obj)
+
+    all_objs.extend(list(old_objs))
+    return all_objs
+
+
 def update_events(events):
-    # split in old/new events
-    old_events = Event.objects.filter(eventor_id__in=[int(x) for x in \
-                    events]) # events is a dict with eventorIDs as keys
-    old_events_ids = [x.eventor_id for x in old_events]
-    new_eventdata = {x: events[x] for x in events if x not in \
-                old_events_ids }
-     
-    # update old events if necessary
-    for event in old_events:
-        evd = events[ event.eventor_id ]
-        update_db_entry(event, evd, 
-                        ['name', 'startdate', 'eventor_id'],
-                        ['name', 'startdate', 'eventorID'])
-    # the rest: insert and give foreign key
-    all_events = []
-    new_events = []
-    for edata in new_eventdata.values():
-        event = generate_db_entry(Event, edata, 
-                    ['name', 'startdate', 'eventor_id'],
-                    ['name', 'startdate', 'eventorID'])
-        event.save()
-        all_events.append(event)
-        edata.eventfkey = event
-    all_events.extend(list(old_events))
-    return all_events
+    return update_objects_by_eventor_id(events, Event,
+                                ['name', 'startdate', 'eventor_id'],
+                                ['name', 'startdate', 'eventorID'])
 
 
-def update_eventraces():
-   pass 
+def update_eventraces(eventraces):
+    return update_objects_by_eventor_id(events, EventRace,
+                                ['eventor_id', 'startdate',
+                                'lightcondition', 'name'],
+                                ['eventorID', 'startdate',
+                                'lightcondition', 'name'],
+                                model_fkeys=['event'], data_fkeys=[0])
+    
 
 def update_classraces(events, classraces):
     # get classraces in db

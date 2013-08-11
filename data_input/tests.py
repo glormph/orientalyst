@@ -162,6 +162,7 @@ class EventUpdate(TestCase):
                                 startdate = ev['fields']['startdate'],
                                 eventorID = ev['fields']['eventor_id']
                                 )
+            
 
     def test_nochange_in_events(self):
         result = iu.update_events(self.events_in_db)
