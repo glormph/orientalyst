@@ -173,10 +173,10 @@ def update_eventraces(eventraces):
                                 model_fkeys=['event'], data_fkeys=[0])
     
 
-def update_classraces(events, classraces):
+def update_classraces(eventraces, classraces):
     # get classraces in db
     cr_indb = Classrace.objects.filter(eventrace__in=[x for x in
-                events])
+                eventraces])
     
     # classraces have no eventorid, which is silly. Instead, there is a
     # eventraceid which is an id for all races of a given competition(day). We
