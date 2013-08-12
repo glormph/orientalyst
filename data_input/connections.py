@@ -22,20 +22,20 @@ class EventorConnection(object):
     def download_competition_data(self, eventor_id): 
         self.apicall = 'competitor/{0}'.format(eventor_id)
         return self.download()
-
-    def download_results(self, person, events=None, days=None):
-        # set self.apicall here
-        url = 'results/person?personId={0}&top=500&includeSplitTimes=true'.format(person.eventorID)
-        
+    
+    def download_events(self, person, days=None):
+        url = 'results/person?personId={0}'.format(person.eventorID)
         if days is not None:
-            # Specify whether to get all results or the ones from a certain date
+            # Specify whether to get all events or the ones from a certain date
             now = datetime.datetime.now()
             fromdate = now - datetime.timedelta(days)
             url = '{0}&fromDate={1}-{2}-{3}'.format(url, str(fromdate.year),
                     str(fromdate.month).zfill(2), str(fromdate.day).zfill(2) )
+        self.apicall = url
+        return self.download()
 
-        elif events is not None:
-            url = '{0}&eventIds={1}'.format(url, ','.join(events))
-        
+    def download_results(self, event):
+        # set self.apicall here
+        url = 'results/event?eventId={0}&includeSplitTimes=true'.format(event.eventorID)
         self.apicall = url
         return self.download()

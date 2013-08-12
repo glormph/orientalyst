@@ -141,6 +141,35 @@ class EventorData(object):
         # FIXME handle clubmembers==False error
         self.competitors = self.add_competition_data(clubmembers)
     
+    def get_newmember_races(self, members):
+        pass
+        # set todate to 7 d before now, leave out fromdate
+        # call get_events
+        # parse events, eventraces, classraces
+        # define personruns
+    
+    def get_recent_races(self, members):
+        pass
+        # set fromdate to 7d before
+        # call get_events
+        # parse events, eventraces, classraces
+        # define personruns
+
+    def get_results_by_race(self, races):
+        # loop through events
+        # if event is in 'races', keep it, otherwise dump
+        # of filtered list, get all results
+        # parse results of the races that we need
+        # attach results to races
+        pass
+
+    def get_events(self, members, fromdate=None, todate=None):
+        for member in members:
+            resultxml = self.connection.download_results(member, days=period,
+                                            events=events)
+            if resultxml is not None:
+                self.parse_results(member, resultxml)
+
     def get_results(self, members, events=None, period=None):
         for member in members:
             resultxml = self.connection.download_results(member, days=period,
@@ -158,7 +187,7 @@ class EventorData(object):
                     return [member]
             # loop falls through, error:
             return False
-    
+
     def finalize(self):
         """Format some data for easy access by db module"""
         tmplist = []
@@ -185,7 +214,13 @@ class EventorData(object):
                 clubmember.parse_competitiondetails(compxml) 
                 competitors.append(clubmember)
         return competitors
-        
+    
+    def parse_newmember_classraces(self, results, members):
+        # loop through event results
+        # create events, eventraces and classraces
+        # return classraces
+        pass
+
     def parse_results(self, person, results):
         if results.tag == 'ResultListList':
             for resultlist in results:

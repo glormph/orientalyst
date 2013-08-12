@@ -51,14 +51,32 @@ class Command(BaseCommand):
         
         self.stdout.write('Downloading results data from eventor (may take a'
                ' while)...')
-        self.eventordata.get_results(new_members, events=options['events'],
-                                    period=newperiod)
-        self.eventordata.get_results(old_members, events=options['events'],
-                                period=oldperiod)
-        dbupdate.password_reset_for_new_users(new_members)
-        self.update_db()
-    
+        
+        self.update_newmember_data(new_members)
+        self.update_all_recent_member_data(new_members+old_members)
 
+        # why is this below the result fetching?
+        dbupdate.password_reset_for_new_users(new_members)
+    
+    def update_newmember_data(self, new_members):
+        """Gets races for new members, filters out the ones already in db, then
+        gets results (splits) for each event not filtered and updates db"""
+        newmember_races = self.eventordata.get_newmember_races(new_members)
+        # do a db query to see which races not in db
+        races_not_in_db = self.get_events_not_in_db(newmember_races)
+        self.eventordata.get_results_by_race(races_not_in_db)
+        self.update_db()        
+
+    def update_all_recent_member_data(self, members):
+        recent_races = self.eventordata.get_recent_races(members)
+        self.eventordata.get_results_by_race(recent_races)
+        self.update_db()
+
+    def get_events_not_in_db(races):
+        pass
+        # do query on classraces by eventraceid
+        # return leftover classraces
+    
     def update_db(self):
         self.eventordata.finalize() # modifies classraces into a list instead of convolutd dict
         self.stdout.write('Updating database...')
