@@ -23,14 +23,14 @@ class EventorConnection(object):
         self.apicall = 'competitor/{0}'.format(eventor_id)
         return self.download()
     
-    def download_events(self, person, days=None):
+    def download_events(self, person, fromdate=None, todate=None):
         url = 'results/person?personId={0}'.format(person.eventorID)
-        if days is not None:
-            # Specify whether to get all events or the ones from a certain date
-            now = datetime.datetime.now()
-            fromdate = now - datetime.timedelta(days)
+        if fromdate is not None:
             url = '{0}&fromDate={1}-{2}-{3}'.format(url, str(fromdate.year),
                     str(fromdate.month).zfill(2), str(fromdate.day).zfill(2) )
+        if todate is not None:
+            url = '{0}&toDate={1}-{2}-{3}'.format(url, str(todate.year),
+                    str(todate.month).zfill(2), str(todate.day).zfill(2) )
         self.apicall = url
         return self.download()
 
