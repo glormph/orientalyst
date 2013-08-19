@@ -189,10 +189,10 @@ class EventorData(object):
             resultxml = self.connection.download_results(event)
             if resultxml is None:
                 continue
-            parsed = self.xml_parse(resultxml)
-        # parse results of the races that we need
-        # attach results to races
-
+            # results are added to existing races in self.xml_parse and below
+            # no need for further processing or even putting output in variable
+            self.xml_parse(resultxml)
+        
     def filter_competitor(self, memberxml, eventorid):
         if eventorid==None:
             return [ClubMember(x) for x in memberxml]
@@ -206,6 +206,7 @@ class EventorData(object):
 
     def finalize(self):
         """Format some data for easy access by db module"""
+        # UNNECCESSARY?
         tmplist = []
         for erid in self.classraces:
             for cr in self.classraces[erid].values():
@@ -347,23 +348,21 @@ class EventorData(object):
                 eventraceid, event.name, event.startdate)
         if classname in self.classraces[eventraceid]:
             cr = self.classraces[eventraceid][classname]
-        else:
-            cr = ClassRace(er, classname)
+            # add results only for event results, for which already exist
+            # a cr in self.classrace by definition
             if add_results is True:
                 for personresult in personresults:
                     cr.splitsFromSingleResults(personresult)
+        else:
+            cr = ClassRace(er, classname)
         
         return {'eventraces': [er], 'classraces': [cr]}
 
     def parse_multiple_raceresults(self, personresults, classname, races_to_parse,
                                     add_results):
         """Called in case of multiday event, where multiple races are run"""
-        # would like to have this call single_raceresults, but that would mean
-        # less effective parsing.
-        
-        # OBS person results have single personresult, eventresults have
-        # multiple!
-        
+        # TODO would like to have this call single_raceresults, but that would
+        # possibly be less effective parsing.
         eventraces = {}
         classraces = {}
         for personresult in personresults:
@@ -390,18 +389,15 @@ class EventorData(object):
                     classraces[eventraceid] = {}
                 else:
                     er = eventraces[eventraceid]
-
+                # same for classrace, and attach results if eventresults
                 if classname not in classraces[eventraceid]:
                     racetype = eventrace.attrib['raceDistance']
-                    # make new classrace, attach to event
                     cr = ClassRace(er, classname, racetype=racetype)
                     classraces[eventraceid][classname] = cr
                 else:
                     cr = classraces[eventraceid][classname]
-
-                if add_results is True:
-                    # add splits
-                    cr.splitsFromRaceResult(raceresult, personid, person)
+                    if add_results is True:
+                        cr.splitsFromRaceResult(raceresult, personid, person)
             
             return {'eventraces': eventraces.values(), 'classraces':
                             classraces.values()}
