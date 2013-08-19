@@ -127,12 +127,18 @@ class ClassRace(BaseData):
         self.results[personid]['firstname'] = firstname
         self.results[personid]['lastname'] = lastname
 
+
+class PersonRun(BaseData)
+    def __init__(self, person, classrace):
+        self.fkeys = {'classrace': classrace, 'person': clubmember}
+
+
 class EventorData(object):
     def __init__(self):
         self.events = {}
         self.eventraces = {}
         self.classraces = {}
-        self.personruns = {}
+        self.personruns = []
         self.connection = connections.EventorConnection()
         self.update_time_days = 7 # how long a period should be requested
                                   # results from eventor from.
@@ -225,19 +231,26 @@ class EventorData(object):
                 competitors.append(clubmember)
         return competitors
    
-    def process_member_result_xml(self, xml):
+    def process_member_result_xml(self, xml, clubmember):
         racedata = {'events': [], 'eventraces': [], 'classraces': []}
         # parse xml and create data models
         for resultlist in results:
-            parsed = self.xml_parse(resultlist, person)
+            parsed = self.xml_parse(resultlist, clubemember)
             racedata['events'].extend(parsed['events'])
             racedata['eventraces'].extend(parsed['eventraces'])
             racedata['classraces'].extend(parsed['classraces'])
-         
         # make personruns
+        for cr in racedata['classraces']:
+            self.personruns.append(PersonRun(clubmember, cr))
+        # fill self.classraces, self.eventraces, self.events
+        self.fill_model_lists(racedata['events'], self.events)
+        self.fill_model_lists(racedata['eventraces'], self.eventraces)
+        for cr in racedata['classraces']:
+            self.classraces[cr.fkeys['eventrace'].eventorID][cr.classname] = cr
 
-        # fill self.classraces etc.
-                
+    def fill_model_lists(self, models, classvar
+        for x in models:
+            classvar[x.eventorID] = x
 
     def xml_parse(self, xml, clubmember=None):
         # map result to Event
