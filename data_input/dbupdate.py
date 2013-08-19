@@ -134,7 +134,7 @@ def generate_db_entry(model, data, objattrs, dataattrs, objfkeys=[], datafkeys=[
 def update_objects_by_eventor_id(data, model, model_attributes,
                 data_attributes, model_fkeys=[], data_fkeys=[]):
     old_objs = model.objects.filter(eventor_id__in=[int(x) for x in \
-                    data]) # events is a dict with eventorIDs as keys
+                    data]) # data is a dict with eventorIDs as keys
     old_ids = [x.eventor_id for x in old_objs]
     new_data = {x: data[x] for x in data if x not in \
                 old_ids }
