@@ -188,24 +188,25 @@ def update_classraces(eventraces, classraces):
                     'classname': x.classname} ) for x in cr_indb }
     # filter downloaded classraces with/without db entry
     for cr in classraces:
-        cr.erace_fkey = cr.eventrace.eventracefkey
-        cr_idfields = {'eventrace': cr.erace_fkey, 'classname' : cr.classname }
+        cr_idfields = {'eventrace': cr.get_fkey('eventrace'), 'classname' : cr.classname }
         is_newcr = True
         for pk in cr_indb_dict:
             if cr_idfields == cr_indb_dict[pk][1]:
                 is_newcr = False
                 # update old classrace
-                cr.classrace_fkey = cr_indb_dict[pk][0]
-                update_db_entry(cr.classrace_fkey, cr,
-                        ['eventrace', 'classname', 'racetype'],
-                        ['erace_fkey', 'classname', 'racetype'])
+                cr.attach_django_object(cr_indb_dict[pk][0])
+                update_db_entry(cr.get_django_object(), cr,
+                        ['classname', 'racetype'],
+                        ['classname', 'racetype'],
+                        ['eventrace'], ['eventrace'])
                 break
         if is_newcr:
             classrace = generate_db_entry(Classrace, cr,
-                ['eventrace', 'classname', 'racetype'],
-                ['erace_fkey', 'classname', 'racetype'])
+                ['classname', 'racetype'],
+                ['classname', 'racetype'],
+                ['eventrace'], ['eventrace'])
             classrace.save()
-            cr.classrace_fkey = classrace
+            cr.attach_django_object(classrace)
 
 def update_results(classraces):
     # get old results from db and make lookup dict
@@ -220,9 +221,9 @@ def update_results(classraces):
     for cr in classraces:
         for personid in cr.results:
             cr.results[personid]['eventorID'] = personid
-            cr.results[personid]['cr'] = cr.classrace_fkey
+            cr.results[personid]['cr'] = cr.get_django_object()
             try:
-                oldresult = oldreslookup[cr.classrace_fkey][personid]
+                oldresult = oldreslookup[cr.get_django_object()][personid]
             except KeyError:
                 newresults.append(generate_db_entry(Result,
                                     cr.results[personid], 
