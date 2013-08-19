@@ -289,18 +289,6 @@ def update_splits(classraces): #FIXME
 
 def update_personruns(eventordata):
     """Updates who-runs-what table"""
-
-    # first make person_run objects in eventordata
-    # this maybe can be done in eventor file
-    eventordata.person_runs = []
-    for p in eventordata.competitors:
-        for erid in p.classraces:
-            for cn in p.classraces[erid]:
-                eventordata.person_runs.append({
-                    'person': p.person_fkey,
-                    'classrace': p.classraces[erid][cn].classrace_fkey,
-                    })
-    
     # get old personruns and create a lookup
     oldprs = PersonRun.objects.filter(classrace__in = \
             [x.classrace_fkey for x in eventordata.classraces])
@@ -312,17 +300,15 @@ def update_personruns(eventordata):
         oldprlookup[pr.classrace][pr.person] = pr
 
     # now update
-    for prun in eventordata.person_runs:
+    for prun in eventordata.personruns:
         try:
-            probj = oldprlookup[ prun['classrace'] ][ prun['person'] ]
+            probj = oldprlookup[ prun.fkeys['classrace'] ][ prun.fkeys['person'] ]
         except KeyError:
-            newprs.append(PersonRun(  
-                person=prun['person'],
-                classrace = prun['classrace']))
+            obj = generate_db_entry(PersonRun, prun, [], [],
+            ['person','classrace'], ['person', 'classrace'])
+            newprs.append(obj)
         else:
-            update_db_entry(probj, prun,
-                    ['person', 'classrace'],
-                    ['person', 'classrace'])
+            update_db_entry(probj, prun, [], [], ['person', 'classrace'], ['person', 'classrace'])
     
     PersonRun.objects.bulk_create(newprs)
     # done
