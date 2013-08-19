@@ -64,12 +64,13 @@ class Command(BaseCommand):
         newmember_races = self.eventordata.get_newmember_races(new_members)
         # do a db query to see which races not in db
         races_not_in_db = self.get_events_not_in_db(newmember_races)
-        self.eventordata.get_results_by_race(races_not_in_db)
+        self.eventordate.filter_races(races_not_in_db)
+        self.eventordata.get_results_of_races(races_not_in_db)
         self.update_db()        
 
     def update_all_recent_member_data(self, members):
         recent_races = self.eventordata.get_recent_races(members)
-        self.eventordata.get_results_by_race(recent_races)
+        self.eventordata.get_results_of_races(recent_races)
         self.update_db()
 
     def get_events_not_in_db(races):
@@ -82,7 +83,7 @@ class Command(BaseCommand):
         self.stdout.write('Updating database...')
         self.stdout.write('Events...')
         events = dbupdate.update_events(self.eventordata.events)
-        eventraces = dbupdate.update_eventraces(self.eventordata.events)
+        eventraces = dbupdate.update_eventraces(self.eventordata.eventraces)
         self.stdout.write('Races...')
         dbupdate.update_classraces(eventraces, self.eventordata.classraces)
         self.stdout.write('Results...')
