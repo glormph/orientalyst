@@ -12,6 +12,9 @@ log = logging.getLogger(__name__)
 class BaseData(object):
     def attach_django_object(self, obj):
         self.db_obj = obj
+    
+    def get_django_object(self, obj):
+        return self.db_obj
 
     def get_fkey(self, name):
         fkey_object = self.fkeys[name]
@@ -140,6 +143,7 @@ class EventorData(object):
                                   # results from eventor from.
 
     def get_competitors(self, personid=None):
+        """Public method to make data object fetch competitors"""
         memberxml = \
             self.connection.download_all_members(constants.ORGANISATION_ID)
         clubmembers = self.filter_competitor(memberxml, personid)
@@ -187,17 +191,6 @@ class EventorData(object):
             # results are added to existing races in self.xml_parse and below
             # no need for further processing or even putting output in variable
             self.xml_parse(resultxml)
-        
-    def filter_competitor(self, memberxml, eventorid):
-        if eventorid is None:
-            return [ClubMember(x) for x in memberxml]
-        else:
-            for member in memberxml:
-                cm = ClubMember(member)
-                if cm.eventorID == eventorid:
-                    return [member]
-            # loop falls through, error:
-            return False
 
     def finalize(self):
         """Format some data for easy access by db module"""
@@ -213,6 +206,17 @@ class EventorData(object):
                 cr.results[pid]['splits'] = [{'split_n': x,
                                              'time': cr.results[pid]['splits'][x]}\
                                             for x in cr.results[pid]['splits']]
+    
+    def filter_competitor(self, memberxml, eventorid):
+        if eventorid is None:
+            return [ClubMember(x) for x in memberxml]
+        else:
+            for member in memberxml:
+                cm = ClubMember(member)
+                if cm.eventorID == eventorid:
+                    return [member]
+            # loop falls through, error:
+            return False
 
     def add_competition_data(self, clubmembers):
         competitors = []
