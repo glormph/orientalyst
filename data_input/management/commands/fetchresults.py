@@ -64,28 +64,25 @@ class Command(BaseCommand):
         """Gets races for new members, filters out the ones already in db, then
         gets results (splits) for each event not filtered and updates db"""
         newmember_races = self.eventordata.get_newmember_races(new_members)
+        self.stdout.write(newmember_races)
         # do a db query to see which races not in db
-        races_not_in_db = self.get_events_not_in_db(newmember_races)
+        races_not_in_db = dbupdate.get_events_not_in_db(newmember_races)
         self.eventordata.filter_races(races_not_in_db)
         self.eventordata.get_results_of_races()
         self.update_db()        
-        # FIXME should there be a wipe data object here?
+        self.eventordata.wipe_data()
 
     def update_all_recent_member_data(self, members):
-        recent_races = self.eventordata.get_recent_races(members)
+        self.eventordata.get_recent_races(members)
         self.eventordata.get_results_of_races()
         self.update_db()
 
-    def get_events_not_in_db(self, races):
-        pass
-        # do query on classraces by eventraceid
-        # return leftover classraces
-    
     def update_db(self):
         self.eventordata.finalize() # modifies classraces into a list instead of convolutd dict
         self.stdout.write('Updating database...')
         self.stdout.write('Events...')
         events = dbupdate.update_events(self.eventordata.events)
+        self.stdout.write('Eventraces...')
         eventraces = dbupdate.update_eventraces(self.eventordata.eventraces)
         self.stdout.write('Races...')
         dbupdate.update_classraces(eventraces, self.eventordata.classraces)

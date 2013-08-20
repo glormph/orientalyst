@@ -14,6 +14,16 @@ def get_old_members(data):
                         eventorid_person_lookup]
     return old_members, eventorid_person_lookup
 
+def get_events_not_in_db(self, races):
+    cr_indb = Classrace.objects.filter(eventrace__in=[x for x in
+            races]).filter(classname__in=[y for x in races.values() 
+            for y in x])
+    print cr_indb
+    print [y for x in races.values() for y in x]
+    # FIXME!
+    # do query on classraces by eventraceid
+    # return leftover classraces
+
 def update_db_persons(data):
     """Feed downloaded eventor data, db will be updated with persons."""
     new_members, new_persons = [], []
@@ -26,13 +36,13 @@ def update_db_persons(data):
                     firstname=competitor.firstname, lastname=competitor.lastname,
                     user=useraccount)
             person.save() # no need for bulk insert, usually few persons
-            competitor.person_fkey = person
+            competitor.attach_django_object(person)
             new_persons.append( person )
             new_members.append( competitor )
 
     for competitor in old_members:
         # add person and sinr django objects to competitors
-        competitor.person_fkey = eventorid_person_lookup[competitor.eventorID]
+        competitor.attach_django_object(eventorid_person_lookup[competitor.eventorID])
         competitor.si_fkeys = {}
         for sinr in competitor.SInrs:
             siobj = Si.objects.get(si=int(sinr), 
@@ -141,10 +151,9 @@ def update_objects_by_eventor_id(data, model, model_attributes,
     
     # update old objects
     for obj in old_objs:
-        data_obj = data[obj.eventor_id]
+        data_obj = data[str(obj.eventor_id)]
         update_db_entry(obj, data_obj,  model_attributes,
                         data_attributes, model_fkeys, data_fkeys)
-
     # insert new objects
     all_objs = []
     for d in new_data.values():
@@ -165,12 +174,12 @@ def update_events(events):
 
 
 def update_eventraces(eventraces):
-    return update_objects_by_eventor_id(events, EventRace,
+    return update_objects_by_eventor_id(eventraces, EventRace,
                                 ['eventor_id', 'startdate',
                                 'lightcondition', 'name'],
                                 ['eventorID', 'startdate',
                                 'lightcondition', 'name'],
-                                model_fkeys=['event'], data_fkeys=[0])
+                                model_fkeys=['event'], data_fkeys=['event'])
     
 
 def update_classraces(eventraces, classraces):
@@ -210,7 +219,7 @@ def update_classraces(eventraces, classraces):
 
 def update_results(classraces):
     # get old results from db and make lookup dict
-    oldresults = Result.objects.filter(classrace__in=[x.classrace_fkey for x \
+    oldresults = Result.objects.filter(classrace__in=[x.get_django_object() for x \
                                                     in classraces])
     oldreslookup, newresults = {}, []
     for x in oldresults:
@@ -253,7 +262,7 @@ def update_results(classraces):
                 if not 'resultobj' in cr.results[personid]:
                     try:
                         cr.results[personid]['resultobj'] = \
-                                newres_lookup[cr.classrace_fkey][personid]
+                                newres_lookup[cr.get_django_object()][personid]
                     except KeyError:
                         raise
                         # FIXME what if not in dict? Lookup problem?
@@ -292,7 +301,7 @@ def update_personruns(eventordata):
     """Updates who-runs-what table"""
     # get old personruns and create a lookup
     oldprs = PersonRun.objects.filter(classrace__in = \
-            [x.classrace_fkey for x in eventordata.classraces])
+            [x.get_django_object() for x in eventordata.classraces])
     oldprlookup = {}
     newprs = []
     for pr in oldprs:

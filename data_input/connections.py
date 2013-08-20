@@ -2,7 +2,7 @@ import os, urllib2, logging, datetime
 from lxml import etree
 import constants
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 class EventorConnection(object):
     def __init__(self):
@@ -34,8 +34,10 @@ class EventorConnection(object):
         self.apicall = url
         return self.download()
 
-    def download_results(self, event):
+    def download_results(self, eventorID):
         # set self.apicall here
-        url = 'results/event?eventId={0}&includeSplitTimes=true'.format(event.eventorID)
+        logger.debug('Downloading results for event {0}'.format(eventorID))
+        url = \
+        'results/event?eventId={0}&includeSplitTimes=true'.format(eventorID)
         self.apicall = url
         return self.download()

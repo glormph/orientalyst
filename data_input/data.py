@@ -30,7 +30,7 @@ class BaseData(object):
     def attach_django_object(self, obj):
         self.db_obj = obj
     
-    def get_django_object(self, obj):
+    def get_django_object(self):
         return self.db_obj
 
     def get_fkey(self, name):
@@ -76,10 +76,10 @@ class Event(BaseData):
 
 
 class EventRace(BaseData):
-    def __init__(self, event, eventraceid, name, date, lightcondition=''):
+    def __init__(self, event, eventraceid, name, startdate, lightcondition=''):
         self.eventorID = eventraceid
         self.name = name # e.g. 'Etapp 1'
-        self.date = date
+        self.startdate = startdate
         self.lightcondition = lightcondition
         self.fkeys = {'event': event}
 
@@ -179,6 +179,7 @@ class EventorData(object):
             '{0}'.format(member.eventorID))
             xml = self.connection.download_events(member.eventorID, todate=todate)
             self.process_member_result_xml(xml, member)
+        return self.classraces
     
     def get_recent_races(self, members):
         """Calling method interface to process recent races for club members"""
@@ -208,8 +209,13 @@ class EventorData(object):
     def get_results_of_races(self):
         """Gets results for races, downloading from eventor for each event,
         then processing."""
-        for event in self.events:
-            resultxml = self.connection.download_results(event)
+        logger.info('Getting results for processed events')
+        c = 0
+        for event_id in self.events:
+            c += 1
+            if c > 5:
+                break
+            resultxml = self.connection.download_results(event_id)
             if resultxml is None:
                 continue
             # results are added to existing races in self.xml_parse and below
@@ -230,6 +236,10 @@ class EventorData(object):
                 cr.results[pid]['splits'] = [{'split_n': x,
                                              'time': cr.results[pid]['splits'][x]}\
                                             for x in cr.results[pid]['splits']]
+    
+    def wipe_data(self):
+        """Deletes all data in self.classraces, self.eventraces, etc"""
+        self.__init__()
     
     def filter_competitor(self, memberxml, eventorid):
         # filters mmebers on an eventorid
@@ -322,7 +332,6 @@ class EventorData(object):
                 add_results = False
             if races_to_parse is None:
                 continue
-
             # process results and fill racedata
             parsed = self.parse_multi_or_singleday_races(personresults, event,
                                 eventclassinfo, classname, races_to_parse, add_results)
@@ -466,16 +475,16 @@ class EventorData(object):
         """Returns races of a certain event in which at least one clubmember
         started. Evaluated by checking which classraces already exist. Returns
         a dict with eventraceid lists as values, classnames as keys."""
-        raceresults_to_parse = {}
-        event_to_parse = self.events[event.eventorID]
-        for cr in self.classraces:
-            er = cr.fkeys['eventrace']
-            if event_to_parse == er.fkeys['event']:
-                if er.eventorID not in raceresults_to_parse:
-                    raceresults_to_parse[cr.classname] = []
-                raceresults_to_parse[cr.classname].append(er.eventorID)
-        
-        return raceresults_to_parse 
+        races_with_club_start = {}
+        for erid in self.classraces:
+            er =  self.eventraces[erid]
+            if er.fkeys['event'] != event:
+                continue
+            for cn in self.classraces[erid]:
+                if cn not in races_with_club_start:
+                    races_with_club_start[cn] = []
+                races_with_club_start[cn].append(erid)
+        return races_with_club_start
     
     def check_competitor_status(self, personresults, classname, classresult, competitorid,
                                     eventraceid=None):
