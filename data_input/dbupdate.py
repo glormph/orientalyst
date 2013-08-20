@@ -14,15 +14,28 @@ def get_old_members(data):
                         eventorid_person_lookup]
     return old_members, eventorid_person_lookup
 
-def get_events_not_in_db(self, races):
+def get_events_not_in_db(races):
     cr_indb = Classrace.objects.filter(eventrace__in=[x for x in
             races]).filter(classname__in=[y for x in races.values() 
             for y in x])
-    print cr_indb
-    print [y for x in races.values() for y in x]
-    # FIXME!
-    # do query on classraces by eventraceid
-    # return leftover classraces
+    erids_indb = {}
+    for x in cr_indb:
+        erid = str(x.eventrace.eventor_id)
+        if erid not in erids_indb:
+            erids_indb[erid] = []
+        erids_indb[erid].append(x.classname)
+    
+    races_not_in_db = []
+    for race in [y for x in races.values() for y in x.values()]:
+        erid = race.fkeys['eventrace'].eventorID
+        try:
+            classes = erids_indb[erid]
+        except KeyError:
+            races_not_in_db.append(race)
+        else:
+            if race.classname not in classes:
+                races_not_in_db.append(race)
+    return races_not_in_db
 
 def update_db_persons(data):
     """Feed downloaded eventor data, db will be updated with persons."""

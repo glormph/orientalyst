@@ -64,7 +64,6 @@ class Command(BaseCommand):
         """Gets races for new members, filters out the ones already in db, then
         gets results (splits) for each event not filtered and updates db"""
         newmember_races = self.eventordata.get_newmember_races(new_members)
-        self.stdout.write(newmember_races)
         # do a db query to see which races not in db
         races_not_in_db = dbupdate.get_events_not_in_db(newmember_races)
         self.eventordata.filter_races(races_not_in_db)
