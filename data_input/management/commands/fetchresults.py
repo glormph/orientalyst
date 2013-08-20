@@ -67,13 +67,13 @@ class Command(BaseCommand):
         # do a db query to see which races not in db
         races_not_in_db = self.get_events_not_in_db(newmember_races)
         self.eventordata.filter_races(races_not_in_db)
-        self.eventordata.get_results_of_races(races_not_in_db)
+        self.eventordata.get_results_of_races()
         self.update_db()        
         # FIXME should there be a wipe data object here?
 
     def update_all_recent_member_data(self, members):
         recent_races = self.eventordata.get_recent_races(members)
-        self.eventordata.get_results_of_races(recent_races)
+        self.eventordata.get_results_of_races()
         self.update_db()
 
     def get_events_not_in_db(self, races):

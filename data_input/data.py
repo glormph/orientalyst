@@ -273,14 +273,19 @@ class EventorData(object):
             racedata['eventraces'].extend(parsed['eventraces'])
             racedata['classraces'].extend(parsed['classraces'])
         # make personruns
-        logger.debug('Creating PersonRun objects')
+        logger.debug('Creating {0} PersonRun '
+        'objects'.format(len(racedata['classraces'])))
         for cr in racedata['classraces']:
             self.personruns.append(PersonRun(clubmember, cr))
         # fill self.classraces, self.eventraces, self.events
         self.fill_model_lists(racedata['events'], self.events)
         self.fill_model_lists(racedata['eventraces'], self.eventraces)
         for cr in racedata['classraces']:
+            if cr.fkeys['eventrace'].eventorID not in self.classraces:
+                self.classraces[cr.fkeys['eventrace'].eventorID] = {}
             self.classraces[cr.fkeys['eventrace'].eventorID][cr.classname] = cr
+        logger.info('Parsed all member result for member with ID '
+        '{0}'.format(clubmember.eventorID))
 
     def fill_model_lists(self, models, classvar):
         for x in models:
@@ -455,7 +460,7 @@ class EventorData(object):
                         cr.splitsFromRaceResult(raceresult, personid, person)
             
             return {'eventraces': eventraces.values(), 'classraces':
-                            classraces.values()}
+                            [y for x in classraces.values() for y in x.values()]}
 
     def check_races_with_club_starts(self, event):
         """Returns races of a certain event in which at least one clubmember
@@ -472,9 +477,6 @@ class EventorData(object):
         
         return raceresults_to_parse 
     
-    def check_race_already_parsed(self, x):
-        pass
-
     def check_competitor_status(self, personresults, classname, classresult, competitorid,
                                     eventraceid=None):
         """Check in which classraces a clubmember started and finished ok."""
