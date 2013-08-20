@@ -35,9 +35,10 @@ class Command(BaseCommand):
         elif options['period'] is not None:
             oldperiod = options['period'] # newperiod should always be None?
             # better if no new people are fetched when updating w period.
-        
+                
         self.stdout.write('Downloading competitors from eventor...')
-
+        if options['competitor'] is not None:
+            options['competitor'] = str(options['competitor'])
         self.eventordata.get_competitors(options['competitor'])
         # FIXME check if problems with competitor download
         # if none downloaded, stop here (wrong ev_id, connection problems)
@@ -52,7 +53,8 @@ class Command(BaseCommand):
         self.stdout.write('Downloading results data from eventor (may take a'
                ' while)...')
         
-        self.update_newmember_data(new_members)
+        if new_members != []:
+            self.update_newmember_data(new_members)
         self.update_all_recent_member_data(new_members+old_members)
 
         # why is this below the result fetching?
@@ -64,16 +66,17 @@ class Command(BaseCommand):
         newmember_races = self.eventordata.get_newmember_races(new_members)
         # do a db query to see which races not in db
         races_not_in_db = self.get_events_not_in_db(newmember_races)
-        self.eventordate.filter_races(races_not_in_db)
+        self.eventordata.filter_races(races_not_in_db)
         self.eventordata.get_results_of_races(races_not_in_db)
         self.update_db()        
+        # FIXME should there be a wipe data object here?
 
     def update_all_recent_member_data(self, members):
         recent_races = self.eventordata.get_recent_races(members)
         self.eventordata.get_results_of_races(recent_races)
         self.update_db()
 
-    def get_events_not_in_db(races):
+    def get_events_not_in_db(self, races):
         pass
         # do query on classraces by eventraceid
         # return leftover classraces

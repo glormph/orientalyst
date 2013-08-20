@@ -1,7 +1,24 @@
 import string, random, logging, datetime
 import connections, constants
 from urllib2 import HTTPError
-log = logging.getLogger(__name__)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+# console handler
+#fh = logging.FileHandler(os.path.join(consts.LOG_DIR, 'vainamoinen.log') )
+loghandler = logging.StreamHandler()
+#fh.setLevel(logging.DEBUG)
+#fh_errors = logging.FileHandler(os.path.join(consts.LOG_DIR, 'errors.log') )
+#fh_errors.setLevel(logging.WARNING)
+formatter = logging.Formatter('%(asctime)s - PID:%(process)d - %(name)s - '
+'%(levelname)s - %(message)s')
+#fh.setFormatter(formatter)
+#fh_errors.setFormatter(formatter)
+#log.addHandler(fh)
+#log.addHandler(fh_errors)
+loghandler.setFormatter(formatter)
+logger.addHandler(loghandler)
+
 
 # how to do relays? --> teamresult instead of personresult
 # how many competitorstatus are there? OK, didnotstart, ...
@@ -60,7 +77,7 @@ class Event(BaseData):
 
 class EventRace(BaseData):
     def __init__(self, event, eventraceid, name, date, lightcondition=''):
-        self.eventraceid = eventraceid
+        self.eventorID = eventraceid
         self.name = name # e.g. 'Etapp 1'
         self.date = date
         self.lightcondition = lightcondition
@@ -144,8 +161,10 @@ class EventorData(object):
 
     def get_competitors(self, personid=None):
         """Public method to make data object fetch competitors"""
+        logger.info('Downloading member data from eventor')
         memberxml = \
             self.connection.download_all_members(constants.ORGANISATION_ID)
+        logger.info('Got {0} members'.format(len(memberxml)))
         clubmembers = self.filter_competitor(memberxml, personid)
         # FIXME handle clubmembers==False error
         self.competitors = self.add_competition_data(clubmembers)
@@ -156,6 +175,8 @@ class EventorData(object):
         now = datetime.datetime.now()
         todate = now - datetime.timedelta(self.update_time_days+1)
         for member in members:
+            logger.info('Getting race data from eventor for new member ID '
+            '{0}'.format(member.eventorID))
             xml = self.connection.download_events(member.eventorID, todate=todate)
             self.process_member_result_xml(xml, member)
     
@@ -164,6 +185,8 @@ class EventorData(object):
         now = datetime.datetime.now()
         fromdate = now - datetime.timedelta(self.update_time_days)
         for member in members:
+            logger.info('Getting race data from eventor for member ID '
+            '{0}'.format(member.eventorID))
             xml = self.connection.download_events(member.eventorID,
                                                     fromdate=fromdate)
             self.process_member_result_xml(xml, member)
@@ -171,6 +194,7 @@ class EventorData(object):
     def filter_races(self, keepraces):
         """Repopulates self.classraces, self.events, self.eventraces,
         by filtering on the races to keep."""
+        logger.info('Filtering races to keep {0} races'.format(len(keepraces)))
         self.classraces, self.events, self.eventraces = {}, {}, {}
         for cr in keepraces:
             eventrace = cr.fkeys['eventrace']
@@ -208,20 +232,27 @@ class EventorData(object):
                                             for x in cr.results[pid]['splits']]
     
     def filter_competitor(self, memberxml, eventorid):
+        # filters mmebers on an eventorid
         if eventorid is None:
             return [ClubMember(x) for x in memberxml]
         else:
             for member in memberxml:
                 cm = ClubMember(member)
                 if cm.eventorID == eventorid:
-                    return [member]
+                    logger.info('Only processing member with eventorid '
+                    '{0}'.format(eventorid))
+                    return [cm]
             # loop falls through, error:
             return False
 
     def add_competition_data(self, clubmembers):
         competitors = []
-        for clubmember in clubmembers:
+        for clubmember in clubmembers[0:10]:
             try:
+                logger.info('Getting competition details for clubmember with'
+                'ID {0}, {1}, {2}.'.format(clubmember.eventorID,
+                clubmember.firstname.encode('utf-8'),
+                clubmember.lastname.encode('utf-8')))
                 compxml = self.connection.download_competition_data(clubmember.eventorID)
             except HTTPError, e:
                 if e.code == 404: # no data in eventor on certain competitor
@@ -232,6 +263,8 @@ class EventorData(object):
         return competitors
    
     def process_member_result_xml(self, xml, clubmember):
+        logger.info('Processing member race xml for member ID {0}, containing '
+         '{1} events.'.format(clubmember.eventorID, len(xml)))
         racedata = {'events': [], 'eventraces': [], 'classraces': []}
         # parse xml and create data models
         for resultlist in xml:
@@ -240,6 +273,7 @@ class EventorData(object):
             racedata['eventraces'].extend(parsed['eventraces'])
             racedata['classraces'].extend(parsed['classraces'])
         # make personruns
+        logger.debug('Creating PersonRun objects')
         for cr in racedata['classraces']:
             self.personruns.append(PersonRun(clubmember, cr))
         # fill self.classraces, self.eventraces, self.events
@@ -254,18 +288,21 @@ class EventorData(object):
 
     def xml_parse(self, xml, clubmember=None):
         # map result to Event
+        logger.debug('Parsing eventor XML')
         eventxml = xml.find('Event')
         eventid = eventxml.find('EventId').text
         if eventid in self.events:
             event = self.events[eventid]
         else:
             event = Event(eventxml, eventid)
+        logger.debug('Created an event, id {0}'.format(eventid))
         
         if clubmember is None:
             to_parse_eventresults = self.check_races_with_club_starts(event)
         # loop through event results by class
         racedata = {'events': [event], 'eventraces': [], 'classraces':[]}
         classresults = xml.findall('ClassResult')
+        logger.debug('Found {0} classresults'.format(len(classresults)))
         for classresult in classresults:
             # prepare parsing
             eventclassinfo = classresult.find('EventClass')
@@ -286,21 +323,24 @@ class EventorData(object):
                                 eventclassinfo, classname, races_to_parse, add_results)
             for k in parsed:
                 racedata[k].extend(parsed[k])
+        logger.debug('All xml parsed')
         return racedata
 
     
     def prepare_member_results(self, classresult, clubmember, classname):
+        logger.debug('Preparing member results')
         personresults = classresult.findall('PersonResult')
         # dont parse team result yet
         if personresults == []: 
+            logger.debug('Found team result, not parsing')
             return None, None
         # check race status (finished), and if race has not already been parsed. 
-        races_to_parse = self.check_competitor_status(personresults,
-                                        clubmember.eventorID)
-        races_to_parse = self.check_race_already_parsed(races_to_parse)
+        races_to_parse = self.check_competitor_status(personresults, classname,
+                                        classresult, clubmember.eventorID)
         # check if there are races to parse for this class
         if classname not in races_to_parse or \
                     races_to_parse[classname] == []:
+            logger.debug('No races to parse for this class.')
             return None, None
         else:
             return races_to_parse, personresults
@@ -320,9 +360,11 @@ class EventorData(object):
     def parse_multi_or_singleday_races(self, personresults, event,
                 eventclassinfo, classname, races_to_parse, add_results):
         if personresults[0].find('RaceResult') is not None:
+            logger.debug('Found multiday classresults')
             return self.parse_multiday_raceresults(personresults, event,
                         classname, races_to_parse, add_results=add_results)
         else:
+            logger.debug('Found singleday classresults')
             return self.parse_singleday_raceresults(personresults, event,
                         eventclassinfo, classname, add_results=add_results)
     
@@ -332,11 +374,19 @@ class EventorData(object):
         # no need to check if eventraceid in races_to_parse, since single day
         # event only has one eventraceid
         if eventraceid in self.eventraces:
+            logger.debug('Eventrace with ID {0} already exists, using '
+            'it.'.format(eventraceid))
             er = self.eventraces[eventraceid]
         else:
+            logger.debug('Creating new Eventrace with ID '
+            '{0}'.format(eventraceid))
             er = EventRace(event,
                 eventraceid, event.name, event.startdate)
+        if eventraceid not in self.classraces:
+            self.classraces[eventraceid] = {}
         if classname in self.classraces[eventraceid]:
+            logger.debug('Classrace for eventrace {0}, class {1} already '
+            'exists'.format(eventraceid, classname.encode('utf-8')))
             cr = self.classraces[eventraceid][classname]
             # add results only for event results, for which already exist
             # a cr in self.classrace by definition
@@ -344,6 +394,8 @@ class EventorData(object):
                 for personresult in personresults:
                     cr.splitsFromSingleResults(personresult)
         else:
+            logger.debug('Creating new classrace for eventrace {0}, class '
+            '{1}'.format(eventraceid, classname.encode('utf-8')))
             cr = ClassRace(er, classname)
         
         return {'eventraces': [er], 'classraces': [cr]}
@@ -355,6 +407,8 @@ class EventorData(object):
         # possibly be less effective parsing.
         eventraces = {}
         classraces = {}
+        logger.debug('Parsing multiday event, got {0} '
+        'personresults'.format(len(personresults)))
         for personresult in personresults:
             person = personresult.find('Person')
             try: # not all competitors are registered in eventor
@@ -362,15 +416,20 @@ class EventorData(object):
             except AttributeError:
                 personid = ''
             # iterate through raceresults
-            for raceresult in personresult.findall('RaceResult'):
+            raceresults = personresult.findall('RaceResult')
+            logger.debug('Got {0} races for this event'.format(len(raceresults)))
+            for raceresult in raceresults:
                 eventrace = raceresult.find('EventRace')
                 eventraceid = eventrace.find('EventRaceId').text
                 # check if race should be parsed (starting clubmembers, not yet parsed for other member)
                 if eventraceid not in races_to_parse[classname]:
+                    logger.debug('Not parsing team results')
                     continue
                     
                 # If eventrace/classrace not yet exist, make new ones 
                 if eventraceid not in eventraces:
+                    logger.debug('Creating new Eventrace with ID '
+                    '{0}'.format(eventraceid))
                     light = eventrace.attrib['raceLightCondition']
                     name = eventrace.find('Name').text
                     date = eventrace.find('RaceDate').find('Date').text
@@ -378,13 +437,19 @@ class EventorData(object):
                     eventraces[eventraceid] = er
                     classraces[eventraceid] = {}
                 else:
+                    logger.debug('Eventrace with ID {0} already exists, '
+                    'using'.format(eventraceid))
                     er = eventraces[eventraceid]
                 # same for classrace, and attach results if eventresults
                 if classname not in classraces[eventraceid]:
+                    logger.debug('Creating new Classrace with eventrace id '
+                    '{0}, class {1}'.format(eventraceid, classname.encode('utf-8')))
                     racetype = eventrace.attrib['raceDistance']
                     cr = ClassRace(er, classname, racetype=racetype)
                     classraces[eventraceid][classname] = cr
                 else:
+                    logger.debug('Classrace with eventrace id {0}, class {1} already exists, '
+                    'using'.format(eventraceid, classname.encode('utf-8')))
                     cr = classraces[eventraceid][classname]
                     if add_results is True:
                         cr.splitsFromRaceResult(raceresult, personid, person)
@@ -410,24 +475,33 @@ class EventorData(object):
     def check_race_already_parsed(self, x):
         pass
 
-    def check_competitor_status(self, personresults, competitorid):
-        # Theoretically, it should only test for competitorstatus, since that
-        # personresults are not given for other people.
-        """Check in which classraces a clubmember started."""
-        eventraceids = []
+    def check_competitor_status(self, personresults, classname, classresult, competitorid,
+                                    eventraceid=None):
+        """Check in which classraces a clubmember started and finished ok."""
+        logger.debug('Checking competitor status for person id {0} '
+        ', have received {1} personresult elements'.format(competitorid, len(personresults)))
+        status_ok = {}
+        # this should not be necessary, but just to be safe
         for personresult in personresults:
             person = personresult.find('Person')
             try: # not all competitors are registered in eventor
                 personid = person.find('PersonId').text
+                logger.debug('Found person id {0} in results'.format(personid))
             except AttributeError:
                 personid = None
-            # iterate through raceresults
-            for raceresult in personresult.findall('RaceResult'):
-                # Check if the requested clubmember did start, if not: next raceresult.
+
+            # Check if the requested clubmember did start, if not: next raceresult.
+            if personresult.find('RaceResult') is not None:
+                for raceresult in personresult.findall('RaceResult'):
+                    if personid == competitorid and \
+                            raceresult.find('Result').find('CompetitorStatus').attrib['value'] != \
+                            'DidNotStart':
+                        eventraceid = raceresult.find('EventRace').find('EventRaceId').text
+                        status_ok[classname] = eventraceid
+            else:
                 if personid == competitorid and \
-                        raceresult.find('Result').find('CompetitorStatus').attrib['value'] != \
+                        personresult.find('Result').find('CompetitorStatus').attrib['value'] != \
                         'DidNotStart':
-                    eventrace = raceresult.find('EventRace')
-                    eventraceids.append(eventrace.find('EventRaceId').text )
-        
-        return eventraceids
+                    eventraceid = classresult.find('EventClass').find('.//EventRaceId').text
+                    status_ok[classname] = eventraceid
+        return status_ok
