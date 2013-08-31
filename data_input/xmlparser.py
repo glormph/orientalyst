@@ -1,6 +1,6 @@
 import logging
 from data_input.inputmodels import Event, EventRace, ClassRace
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('xmlparser')
 
 class EventorXMLParser(object):
     def __init__(self):
@@ -13,7 +13,7 @@ class EventorXMLParser(object):
     
     def xml_parse(self, xml, clubmember=None, to_parse_eventresults=None):
         # map result to Event
-        logger.debug('Parsing eventor XML')
+        logger.warning('Parsing eventor XML')
         eventxml = xml.find('Event')
         eventid = eventxml.find('EventId').text
         if eventid in self.events:
@@ -144,11 +144,15 @@ class EventorXMLParser(object):
                 eventraceid = eventrace.find('EventRaceId').text
                 # check if race should be parsed (starting clubmembers, not yet parsed for other member)
                 if eventraceid not in races_to_parse[classname]:
-                    logger.debug('Not parsing')
+                    logger.debug('Not parsing eventrace '
+                    '{0}'.format(eventraceid))
                     continue
                     
                 # If eventrace/classrace not yet exist, make new ones 
-                if eventraceid not in self.eventraces:
+                # FIXME theoretically possible for 1 member to run two races
+                # with same eventraceid
+                if eventraceid not in self.eventraces and eventraceid not in \
+                            eventraces:
                     logger.debug('Creating new Eventrace with ID '
                     '{0}'.format(eventraceid))
                     light = eventrace.attrib['raceLightCondition']
@@ -160,9 +164,22 @@ class EventorXMLParser(object):
                 else:
                     logger.debug('Eventrace with ID {0} already exists, '
                     'using'.format(eventraceid))
-                    er = self.eventraces[eventraceid]
+                    try:
+                        er = self.eventraces[eventraceid]
+                    except KeyError:
+                        # when a member raced two classes of same eventrace
+                        er = eventraces[eventraceid]
+
                 # same for classrace, and attach results if eventresults
-                if classname not in self.classraces[eventraceid]:
+                newclassrace = False
+                try:
+                    if classname not in self.classraces[eventraceid]:
+                        newclassrace = True
+                except KeyError:
+                    if classname not in classraces[eventraceid]:
+                        newclassrace = True
+
+                if newclassrace is True: 
                     logger.debug('Creating new Classrace with eventrace id '
                     '{0}, class {1}'.format(eventraceid, classname.encode('utf-8')))
                     racetype = eventrace.attrib['raceDistance']

@@ -1,7 +1,9 @@
+import logging
 from django.core.management.base import BaseCommand, CommandError
 from data_input import dbupdate, data
 from optparse import make_option
 
+logger = logging.getLogger('data_input')
 
 class Command(BaseCommand):
     args = ''
@@ -43,27 +45,26 @@ class Command(BaseCommand):
         # FIXME check if problems with competitor download
         # if none downloaded, stop here (wrong ev_id, connection problems)
         if options['onlyold'] is False:
-            self.stdout.write('Updating person database...')
+            logger.info('Updating person database...')
             old_members, new_members = dbupdate.update_db_persons(self.eventordata)
             # FIXME new members and personid?
         else:
-            self.stdout.write('Only old members, skipping person database update...')
+            logger.info('Only old members, skipping person database update...')
             old_members, new_members = dbupdate.get_old_members(self.eventordata)[0], []
         
-        self.stdout.write('Downloading results data from eventor (may take a'
-               ' while)...')
-        
         if new_members != []:
-            self.update_newmember_data(new_members)
-        self.update_all_recent_member_data(new_members+old_members)
+            self.update_newmember_data([new_members[1]])
+        #self.update_all_recent_member_data(new_members+old_members)
 
         # why is this below the result fetching?
-        dbupdate.password_reset_for_new_users(new_members)
+            # dbupdate.password_reset_for_new_users(new_members)
     
     def update_newmember_data(self, new_members):
         """Gets races for new members, filters out the ones already in db, then
         gets results (splits) for each event not filtered and updates db"""
-        newmember_races = self.eventordata.get_newmember_races(new_members)
+        logger.info('Downloading results data from eventor for {0} '
+        'new members'.format(len(new_members)))
+        newmember_races = self.eventordata.get_newmember_races(new_members[:1])
         # do a db query to see which races not in db
         races_not_in_db = dbupdate.get_events_not_in_db(newmember_races)
         self.eventordata.filter_races(races_not_in_db)
@@ -79,7 +80,7 @@ class Command(BaseCommand):
     def update_db(self):
         self.eventordata.finalize() # modifies classraces into a list instead of convolutd dict
         self.stdout.write('Updating database...')
-        self.stdout.write('Events...')
+        logger.info('Updating {0} events'.format(len(self.eventordata.events)))
         events = dbupdate.update_events(self.eventordata.events)
         self.stdout.write('Eventraces...')
         eventraces = dbupdate.update_eventraces(self.eventordata.eventraces)

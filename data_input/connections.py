@@ -41,3 +41,4 @@ class EventorConnection(object):
         'results/event?eventId={0}&includeSplitTimes=true'.format(eventorID)
         self.apicall = url
         return self.download()
+

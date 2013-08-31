@@ -4,22 +4,7 @@ from urllib2 import HTTPError
 from data_input.inputmodels import PersonRun, ClubMember
 from data_input.xmlparser import EventorXMLParser
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-# console handler
-#fh = logging.FileHandler(os.path.join(consts.LOG_DIR, 'vainamoinen.log') )
-loghandler = logging.StreamHandler()
-#fh.setLevel(logging.DEBUG)
-#fh_errors = logging.FileHandler(os.path.join(consts.LOG_DIR, 'errors.log') )
-#fh_errors.setLevel(logging.WARNING)
-formatter = logging.Formatter('%(asctime)s - PID:%(process)d - %(name)s - '
-'%(levelname)s - %(message)s')
-#fh.setFormatter(formatter)
-#fh_errors.setFormatter(formatter)
-#log.addHandler(fh)
-#log.addHandler(fh_errors)
-loghandler.setFormatter(formatter)
-logger.addHandler(loghandler)
+logger = logging.getLogger('data_input')
 
 
 # how to do relays? --> teamresult instead of personresult
@@ -59,8 +44,16 @@ class EventorData(object):
         for member in members:
             logger.info('Getting race data from eventor for new member ID '
             '{0}'.format(member.eventorID))
-            xml = self.connection.download_events(member.eventorID, todate=todate)
-            self.process_member_result_xml(xml, member)
+            try:
+                xml = self.connection.download_events(member.eventorID, todate=todate)
+            except HTTPError, e:
+                if e.code == 500:
+                    logger.warning('HTTPError 500 occurred downloading events')
+                    continue
+                else:
+                    raise
+            else:
+                self.process_member_result_xml(xml, member)
         return self.classraces
     
     def get_recent_races(self, members):
@@ -92,19 +85,21 @@ class EventorData(object):
         """Gets results for races, downloading from eventor for each event,
         then processing."""
         logger.info('Getting results for processed events')
-        c = 0
         for event_id in self.events:
-            c += 1
-            if c > 5:
-                break
-            resultxml = self.connection.download_results(event_id)
-            if resultxml is None:
-                continue
-            # results are added to existing races in self.xml_parse and below
-            # no need for further processing or even putting output in variable
-            results_toparse = self.check_races_with_club_starts(self.events[event_id])
-            self.parser.set_races_as_classvars(self.events, self.eventraces, self.classraces)
-            self.parser.xml_parse(resultxml, to_parse_eventresults=results_toparse)
+            try:
+                resultxml = self.connection.download_results(event_id)
+            except HTTPError, e:
+                if e.code == 500:
+                    logger.warning('HTTPError 500 occurred downloading resultdata')
+                    continue
+                else:
+                    raise
+            else:
+                # results are added to existing races in self.xml_parse and below
+                # no need for further processing or even putting output in variable
+                results_toparse = self.check_races_with_club_starts(self.events[event_id])
+                self.parser.set_races_as_classvars(self.events, self.eventraces, self.classraces)
+                self.parser.xml_parse(resultxml, to_parse_eventresults=results_toparse)
 
     def finalize(self):
         """Format some data for easy access by db module"""
@@ -141,15 +136,17 @@ class EventorData(object):
 
     def add_competition_data(self, clubmembers):
         competitors = []
-        for clubmember in clubmembers[0:10]:
+        for clubmember in clubmembers[:10]:
             try:
                 logger.info('Getting competition details for clubmember with'
                 'ID {0}, {1}, {2}.'.format(clubmember.eventorID,
-                clubmember.firstname.encode('utf-8'),
-                clubmember.lastname.encode('utf-8')))
+                clubmember.firstname,
+                clubmember.lastname))
                 compxml = self.connection.download_competition_data(clubmember.eventorID)
             except HTTPError, e:
                 if e.code == 404: # no data in eventor on certain competitor
+                    log.warning('No competition data for competitor ID '
+                    '{0}'.format(clubmember.eventorID))
                     continue
             else:
                 clubmember.parse_competitiondetails(compxml) 
@@ -161,8 +158,8 @@ class EventorData(object):
          '{1} events.'.format(clubmember.eventorID, len(xml)))
         racedata = {'events': [], 'eventraces': [], 'classraces': []}
         # parse xml and create data models
+        self.parser.set_races_as_classvars(self.events, self.eventraces, self.classraces)
         for resultlist in xml:
-            self.parser.set_races_as_classvars(self.events, self.eventraces, self.classraces)
             parsed = self.parser.xml_parse(resultlist, clubmember)
             racedata['events'].extend(parsed['events'])
             racedata['eventraces'].extend(parsed['eventraces'])
