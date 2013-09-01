@@ -1,4 +1,4 @@
-import logging, datetime
+import logging, datetime, time
 import connections, constants
 from urllib2 import HTTPError
 from data_input.inputmodels import PersonRun, ClubMember
@@ -142,7 +142,7 @@ class EventorData(object):
 
     def add_competition_data(self, clubmembers):
         competitors = []
-        for clubmember in clubmembers[:10]:
+        for clubmember in clubmembers:
             try:
                 logger.info('Getting competition details for clubmember with'
                 'ID {0}, {1}, {2}.'.format(clubmember.eventorID,
@@ -157,6 +157,7 @@ class EventorData(object):
             else:
                 clubmember.parse_competitiondetails(compxml) 
                 competitors.append(clubmember)
+            time.sleep(1)
         return competitors
    
     def process_member_result_xml(self, xml, clubmember):
