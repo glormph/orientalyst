@@ -159,12 +159,13 @@ def update_objects_by_eventor_id(data, model, model_attributes,
     old_objs = model.objects.filter(eventor_id__in=[int(x) for x in \
                     data]) # data is a dict with eventorIDs as keys
     old_ids = [x.eventor_id for x in old_objs]
-    new_data = {x: data[x] for x in data if x not in \
+    new_data = {x: data[x] for x in data if int(x) not in \
                 old_ids }
     
     # update old objects
     for obj in old_objs:
         data_obj = data[str(obj.eventor_id)]
+        data_obj.attach_django_object(obj)
         update_db_entry(obj, data_obj,  model_attributes,
                         data_attributes, model_fkeys, data_fkeys)
     # insert new objects
