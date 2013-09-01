@@ -51,14 +51,17 @@ class Command(BaseCommand):
         else:
             logger.info('Only old members, skipping person database update...')
             old_members, new_members = dbupdate.get_old_members(self.eventordata)[0], []
-        
+                
         if new_members != []:
             self.update_newmember_data([new_members[1]])
-        #self.update_all_recent_member_data(new_members+old_members)
+        else:
+            logger.info('No new members found')
+        self.update_all_recent_member_data(new_members+old_members[:20])
 
         # why is this below the result fetching?
             # dbupdate.password_reset_for_new_users(new_members)
-    
+        logger.info('Finished updating')
+
     def update_newmember_data(self, new_members):
         """Gets races for new members, filters out the ones already in db, then
         gets results (splits) for each event not filtered and updates db"""
@@ -82,14 +85,15 @@ class Command(BaseCommand):
         self.stdout.write('Updating database...')
         logger.info('Updating {0} events'.format(len(self.eventordata.events)))
         events = dbupdate.update_events(self.eventordata.events)
-        self.stdout.write('Eventraces...')
+        logger.info('Updating {0} '
+                    'eventraces'.format(len(self.eventordata.eventraces)))
         eventraces = dbupdate.update_eventraces(self.eventordata.eventraces)
-        self.stdout.write('Races...')
+        logger.info('Updating {0} '
+                    'classraces'.format(len(self.eventordata.classraces)))
         dbupdate.update_classraces(eventraces, self.eventordata.classraces)
-        self.stdout.write('Results...')
+        logger.info('Updating results')
         dbupdate.update_results(self.eventordata.classraces)
-        self.stdout.write('Splits...')
+        logger.info('Updating splits')
         dbupdate.update_splits(self.eventordata.classraces)
-        self.stdout.write('PersonRuns...')
+        logger.info('Updating personruns')
         dbupdate.update_personruns(self.eventordata)
-        self.stdout.write('All done!')
