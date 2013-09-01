@@ -1,6 +1,4 @@
-import string, random, logging
-logger = logging.getLogger(__name__)
-
+import string, random
 
 class BaseData(object):
     def attach_django_object(self, obj):

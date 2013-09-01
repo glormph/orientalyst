@@ -82,12 +82,19 @@ class EventorData(object):
             self.eventraces[eventrace.eventorID] = eventrace
 
     def get_results_of_races(self):
-        """Gets results for races, downloading from eventor for each event,
-        then processing."""
+        """Gets results for races, downloading from eventor for each 
+        event/personcombination, then processing."""
+        results_to_download = self.get_person_event_combinations()
         logger.info('Getting results for processed events')
-        for event_id in self.events:
+        for cr in results_to_download:
+            eventid = cr.fkeys['eventrace'].fkeys['event'].eventorID
+            personid = results_to_download[cr].eventorID
+            if eventid != '3009':
+                continue
+            logger.debug('Downloading results for person {0}, '
+                'event {1}'.format(personid, eventid))
             try:
-                resultxml = self.connection.download_results(event_id)
+                resultxml = self.connection.download_results(personid, eventid)
             except HTTPError, e:
                 if e.code == 500:
                     logger.warning('HTTPError 500 occurred downloading resultdata')
@@ -95,9 +102,8 @@ class EventorData(object):
                 else:
                     raise
             else:
-                # results are added to existing races in self.xml_parse and below
-                # no need for further processing or even putting output in variable
-                results_toparse = self.check_races_with_club_starts(self.events[event_id])
+                # results are added to existing races in by parser
+                results_toparse = self.check_races_with_club_starts(self.events[eventid])
                 self.parser.set_races_as_classvars(self.events, self.eventraces, self.classraces)
                 self.parser.xml_parse(resultxml, to_parse_eventresults=results_toparse)
 
@@ -145,7 +151,7 @@ class EventorData(object):
                 compxml = self.connection.download_competition_data(clubmember.eventorID)
             except HTTPError, e:
                 if e.code == 404: # no data in eventor on certain competitor
-                    log.warning('No competition data for competitor ID '
+                    logger.warning('No competition data for competitor ID '
                     '{0}'.format(clubmember.eventorID))
                     continue
             else:
@@ -197,3 +203,14 @@ class EventorData(object):
                     races_with_club_start[cn] = []
                 races_with_club_start[cn].append(erid)
         return races_with_club_start
+
+    def get_person_event_combinations(self):
+        personruns_to_download = {}
+        for pr in self.personruns:
+            try:
+                p = personruns_to_download[pr.fkeys['classrace']]
+            except KeyError:
+                personruns_to_download[pr.fkeys['classrace']] = \
+                                                    pr.fkeys['person']
+        return personruns_to_download
+

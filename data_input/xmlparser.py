@@ -1,6 +1,6 @@
 import logging
 from data_input.inputmodels import Event, EventRace, ClassRace
-logger = logging.getLogger('xmlparser')
+logger = logging.getLogger('data_input')
 
 class EventorXMLParser(object):
     def __init__(self):
@@ -12,8 +12,15 @@ class EventorXMLParser(object):
         self.classraces = classraces
     
     def xml_parse(self, xml, clubmember=None, to_parse_eventresults=None):
+        if xml.tag == 'ResultListList':
+            for resultlist in xml:
+                return self.parse_results(resultlist, clubmember, to_parse_eventresults)
+        elif xml.tag == 'ResultList':
+            return self.parse_results(xml, clubmember, to_parse_eventresults)
+    
+    def parse_results(self, xml, clubmember=None, to_parse_eventresults=None):
         # map result to Event
-        logger.warning('Parsing eventor XML')
+        logger.debug('Parsing eventor XML')
         eventxml = xml.find('Event')
         eventid = eventxml.find('EventId').text
         if eventid in self.events:
@@ -169,15 +176,21 @@ class EventorXMLParser(object):
                     except KeyError:
                         # when a member raced two classes of same eventrace
                         er = eventraces[eventraceid]
-
+                    finally:
+                        if eventraceid not in classraces:
+                            classraces[eventraceid] = {}
                 # same for classrace, and attach results if eventresults
                 newclassrace = False
                 try:
                     if classname not in self.classraces[eventraceid]:
                         newclassrace = True
+                    else:
+                        cr = self.classraces[eventraceid][classname]
                 except KeyError:
                     if classname not in classraces[eventraceid]:
                         newclassrace = True
+                    else:
+                        cr = classraces[eventraceid][classname]
 
                 if newclassrace is True: 
                     logger.debug('Creating new Classrace with eventrace id '
@@ -188,12 +201,11 @@ class EventorXMLParser(object):
                 else:
                     logger.debug('Classrace with eventrace id {0}, class {1} already exists, '
                     'using'.format(eventraceid, classname.encode('utf-8')))
-                    cr = self.classraces[eventraceid][classname]
                     if add_results is True:
                         cr.splitsFromRaceResult(raceresult, personid, person)
                     classraces[eventraceid][classname] = cr
 
-            return {'eventraces': eventraces.values(), 'classraces':
+        return {'eventraces': eventraces.values(), 'classraces':
                             [y for x in classraces.values() for y in x.values()]}
 
     def check_competitor_status(self, personresults, classname, classresult, competitorid,

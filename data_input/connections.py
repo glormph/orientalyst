@@ -34,11 +34,8 @@ class EventorConnection(object):
         self.apicall = url
         return self.download()
 
-    def download_results(self, eventorID):
-        # set self.apicall here
-        logger.debug('Downloading results for event {0}'.format(eventorID))
-        url = \
-        'results/event?eventId={0}&includeSplitTimes=true'.format(eventorID)
-        self.apicall = url
+    def download_results(self, personid, eventid):
+        self.apicall = 'results/person?personId={0}&eventIds={1}&' \
+              'includeSplitTimes=true&top=10000'.format(personid, eventid)
         return self.download()
 
