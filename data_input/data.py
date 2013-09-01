@@ -89,8 +89,6 @@ class EventorData(object):
         for cr in results_to_download:
             eventid = cr.fkeys['eventrace'].fkeys['event'].eventorID
             personid = results_to_download[cr].eventorID
-            if eventid != '3009':
-                continue
             logger.debug('Downloading results for person {0}, '
                 'event {1}'.format(personid, eventid))
             try:
@@ -142,7 +140,7 @@ class EventorData(object):
 
     def add_competition_data(self, clubmembers):
         competitors = []
-        for clubmember in clubmembers:
+        for clubmember in clubmembers[:20]:
             try:
                 logger.info('Getting competition details for clubmember with'
                 'ID {0}, {1}, {2}.'.format(clubmember.eventorID,

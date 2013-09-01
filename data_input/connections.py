@@ -26,11 +26,12 @@ class EventorConnection(object):
     def download_events(self, eventorID, fromdate=None, todate=None):
         url = 'results/person?personId={0}'.format(eventorID)
         if fromdate is not None:
-            url = '{0}&fromDate={1}-{2}-{3}'.format(url, str(fromdate.year),
+            url = '{0}&fromDate={1}-{2}-{3}&toDate=2013-09-01'.format(url, str(fromdate.year),
                     str(fromdate.month).zfill(2), str(fromdate.day).zfill(2) )
         if todate is not None:
             url = '{0}&toDate={1}-{2}-{3}'.format(url, str(todate.year),
                     str(todate.month).zfill(2), str(todate.day).zfill(2) )
+        print url
         self.apicall = url
         return self.download()
 
