@@ -210,6 +210,8 @@ class EventorData(object):
     def get_person_event_combinations(self):
         personruns_to_download = {}
         for pr in self.personruns:
+            if pr.fkeys['classrace'] not in self.classraces:
+                continue
             try:
                 p = personruns_to_download[pr.fkeys['classrace']]
             except KeyError:

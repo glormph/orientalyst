@@ -22,7 +22,7 @@ def get_old_members(data):
     return old_members, eventorid_person_lookup
 
 def get_events_not_in_db(races):
-    cr_indb = Classrace.objects.filter(eventrace__in=[x for x in
+    cr_indb = Classrace.objects.filter(eventrace__eventor_id__in=[int(x) for x in
             races]).filter(classname__in=[y for x in races.values() 
             for y in x])
     erids_indb = {}
