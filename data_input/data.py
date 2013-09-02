@@ -34,18 +34,26 @@ class EventorData(object):
         logger.info('Got {0} members'.format(len(memberxml)))
         clubmembers = self.filter_competitor(memberxml, personid)
         # FIXME handle clubmembers==False error
-        self.competitors = self.add_competition_data(clubmembers)
+        self.add_competition_data(clubmembers)
     
+    def create_clubmembers(self, memberobjs):
+        competitors = []
+        for member in memberobjs:
+            cm = ClubMember(eventor_id=member.eventor_id)
+            cm.attach_django_object(member)
+            competitors.append(cm)
+        return competitors
+
     def get_newmember_races(self, members):
         """Interface method to process all races from new members except from
         the last x days"""
         now = datetime.datetime.now()
-        todate = now - datetime.timedelta(self.update_time_days+1)
         for member in members:
-            logger.info('Getting race data from eventor for new member ID '
-            '{0}'.format(member.eventorID))
+            logger.info('Getting races participated in by new member ID '
+                                            '{0}'.format(member.eventorID))
             try:
-                xml = self.connection.download_events(member.eventorID, todate=todate)
+                xml = self.connection.download_events(member.eventorID,
+                                                        todate=now)
             except HTTPError, e:
                 if e.code == 500:
                     logger.warning('HTTPError 500 occurred downloading events')
@@ -120,17 +128,15 @@ class EventorData(object):
                                              'time': cr.results[pid]['splits'][x]}\
                                             for x in cr.results[pid]['splits']]
     
-    def wipe_data(self):
-        """Deletes all data in self.classraces, self.eventraces, etc"""
-        self.__init__()
-    
     def filter_competitor(self, memberxml, eventorid):
         # filters mmebers on an eventorid
         if eventorid is None:
-            return [ClubMember(x) for x in memberxml]
+            clubmembers = [ClubMember() for x in memberxml]
+            return [cm.parse_personXML(x) for cm,x in zip(clubmembers,memberxml)]
         else:
             for member in memberxml:
-                cm = ClubMember(member)
+                cm = ClubMember()
+                cm.parse_personXML(member)
                 if cm.eventorID == eventorid:
                     logger.info('Only processing member with eventorid '
                     '{0}'.format(eventorid))
@@ -140,7 +146,7 @@ class EventorData(object):
 
     def add_competition_data(self, clubmembers):
         competitors = []
-        for clubmember in clubmembers[:20]:
+        for clubmember in clubmembers[:1]:
             try:
                 logger.info('Getting competition details for clubmember with'
                 'ID {0}, {1}, {2}.'.format(clubmember.eventorID,
@@ -181,8 +187,6 @@ class EventorData(object):
             if cr.fkeys['eventrace'].eventorID not in self.classraces:
                 self.classraces[cr.fkeys['eventrace'].eventorID] = {}
             self.classraces[cr.fkeys['eventrace'].eventorID][cr.classname] = cr
-        logger.info('Parsed all member result for member with ID '
-        '{0}'.format(clubmember.eventorID))
 
     def fill_model_lists(self, models, classvar):
         for x in models:

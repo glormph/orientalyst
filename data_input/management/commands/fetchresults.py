@@ -9,8 +9,8 @@ class Command(BaseCommand):
     args = ''
     help = 'Downloads new data from eventor, updates database with it'
     option_list = BaseCommand.option_list + (
-        make_option('--competitor', '-c', type='int', 
-            default=None, dest='competitor'),) + (
+        make_option('--newcompetitor', '-n', type='int', 
+            default=None, dest='newcompetitor'),) + (
         make_option('--event', '-e', type='int', default=None, dest='events',
                         action="append"), ) + (
         make_option('--period', '-t', type='int', default=None,
@@ -25,8 +25,6 @@ class Command(BaseCommand):
         newperiod = None
         oldperiod = 7
         
-        # FIXME --competitor should already be in db.
-
         if None not in [options['events'], options['period']]:
             pass # TODO error here
         if options['onlyold'] is True and \
@@ -38,10 +36,20 @@ class Command(BaseCommand):
             oldperiod = options['period'] # newperiod should always be None?
             # better if no new people are fetched when updating w period.
                 
-        self.stdout.write('Downloading competitors from eventor...')
-        if options['competitor'] is not None:
-            options['competitor'] = str(options['competitor'])
-        self.eventordata.get_competitors(options['competitor'])
+        if options['newcompetitor'] is not None:
+            members = dbupdate.get_members([options['newcompetitor']])
+            clubmembers = self.eventordata.create_clubmembers(members)
+            self.get_newmember_data(clubmembers)
+        else:
+            members = dbupdate.get_all_members()
+            clubmembers = self.eventordata.create_clubmembers(members)
+            self.update_all_recent_member_data(clubmembers)
+
+        logger.info('Finished updating')
+        return
+###################################################
+
+            #self.eventordata.get_competitors(options['competitor'])
         # FIXME check if problems with competitor download
         # if none downloaded, stop here (wrong ev_id, connection problems)
         if options['onlyold'] is False:
@@ -56,24 +64,21 @@ class Command(BaseCommand):
             self.update_newmember_data([new_members[1]])
         else:
             logger.info('No new members found')
-        self.update_all_recent_member_data(new_members+old_members[:20])
 
-        # why is this below the result fetching?
             # dbupdate.password_reset_for_new_users(new_members)
-        logger.info('Finished updating')
 
-    def update_newmember_data(self, new_members):
-        """Gets races for new members, filters out the ones already in db, then
+    def get_newmember_data(self, members):
+        """Gets races for new member, filters out the ones already in db, then
         gets results (splits) for each event not filtered and updates db"""
-        logger.info('Downloading results data from eventor for {0} '
-        'new members'.format(len(new_members)))
-        newmember_races = self.eventordata.get_newmember_races(new_members[:1])
+        logger.info('Downloading results data from eventor for {0}'
+        ' new members'.format(len(members)))
+        newmember_races = self.eventordata.get_newmember_races(members)
         # do a db query to see which races not in db
+        print newmember_races
         races_not_in_db = dbupdate.get_events_not_in_db(newmember_races)
         self.eventordata.filter_races(races_not_in_db)
         self.eventordata.get_results_of_races()
         self.update_db()        
-        self.eventordata.wipe_data()
 
     def update_all_recent_member_data(self, members):
         self.eventordata.get_recent_races(members)
