@@ -13,17 +13,17 @@ class BaseData(object):
 
 
 class ClubMember(BaseData):
-    def __init__(self, xml=None):
-        self.SInrs = []
-        self.lastname = '' 
-        self.firstname = ''
-        self.email = None
-        self.eventorID = None
+    def __init__(self, sinrs=[], lastname=None, firstname=None, email=None,
+    eventor_id=None, organisation=None):
+        self.SInrs = sinrs
+        self.lastname = lastname 
+        self.firstname = firstname
+        self.email = email
+        self.eventorID = str(eventor_id)
         self.classraces = {}
-        if xml is not None:
-            self.parsePersonXML(xml)
+        self.organisation = organisation
 
-    def parsePersonXML(self, person):
+    def parse_personXML(self, person):
         self.lastname = person.find('.//Family').text.encode('utf-8')
         self.firstname = person.find('.//Given').text.encode('utf-8')
         self.eventorID = person.find('.//PersonId').text
@@ -33,6 +33,9 @@ class ClubMember(BaseData):
             self.email = None
 
     def parse_competitiondetails(self, xml):
+        org = xml.find('.//OrganisationId')
+        if org is not None:
+            self.organisation = org.text
         ccards = xml.findall('.//CCard')
         for ccard in ccards:
             if ccard.find('PunchingUnitType').attrib['value'] == 'SI':
