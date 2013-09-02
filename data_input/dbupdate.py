@@ -6,8 +6,15 @@ from django.contrib.auth.forms import PasswordResetForm
 from graphs.models import Person, Event, EventRace, Classrace, PersonRun, \
                         Result, Si, Split 
 
+def get_all_members():
+    return Person.objects.all()
+
+def get_members(member_ids=[]):
+    return Person.objects.filter(eventor_id__in=member_ids)
+
+    
 def get_old_members(data):
-    old_persons = Person.objects.all().filter(eventor_id__in=[x.eventorID \
+    old_persons = Person.objects.filter(eventor_id__in=[x.eventorID \
                 for x in data.competitors])
     eventorid_person_lookup = {str(x.eventor_id): x for x in old_persons}
     old_members = [x for x in data.competitors if x.eventorID in
@@ -319,14 +326,15 @@ def update_personruns(eventordata):
     oldprlookup = {}
     newprs = []
     for pr in oldprs:
-        if not pr.classrace in oldprs:
+        if not pr.classrace in oldprlookup:
             oldprlookup[pr.classrace] = {}
         oldprlookup[pr.classrace][pr.person] = pr
 
     # now update
     for prun in eventordata.personruns:
         try:
-            probj = oldprlookup[ prun.fkeys['classrace'] ][ prun.fkeys['person'] ]
+            probj = \
+            oldprlookup[prun.get_fkey('classrace')][prun.get_fkey('person')]
         except KeyError:
             obj = generate_db_entry(PersonRun, prun, [], [],
             ['person','classrace'], ['person', 'classrace'])
