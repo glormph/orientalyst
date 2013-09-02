@@ -113,21 +113,22 @@ class EventorData(object):
                 self.parser.set_races_as_classvars(self.events, self.eventraces, self.classraces)
                 self.parser.xml_parse(resultxml, to_parse_eventresults=results_toparse)
 
-    def finalize(self):
+    def get_classraces_as_list(self):
         """Format some data for easy access by db module"""
-        # UNNECCESSARY?
-        tmplist = []
+        classraces = []
         for erid in self.classraces:
             for cr in self.classraces[erid].values():
-                tmplist.append(cr)
-        self.classraces = tmplist
-        
-        for cr in self.classraces:
+                classraces.append(cr)
+        return classraces
+
+    def reformat_split_results(self, classraces):
+        for cr in classraces:
             for pid in cr.results:
                 cr.results[pid]['splits'] = [{'split_n': x,
                                              'time': cr.results[pid]['splits'][x]}\
                                             for x in cr.results[pid]['splits']]
-    
+        return classraces
+
     def filter_competitor(self, memberxml, eventorid):
         # filters mmebers on an eventorid
         if eventorid is None:

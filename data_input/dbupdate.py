@@ -318,11 +318,11 @@ def update_splits(classraces): #FIXME
     Split.objects.bulk_create(newsplits)
 
 
-def update_personruns(eventordata):
+def update_personruns(classraces, personruns):
     """Updates who-runs-what table"""
     # get old personruns and create a lookup
     oldprs = PersonRun.objects.filter(classrace__in = \
-            [x.get_django_object() for x in eventordata.classraces])
+            [x.get_django_object() for x in classraces])
     oldprlookup = {}
     newprs = []
     for pr in oldprs:
@@ -331,7 +331,7 @@ def update_personruns(eventordata):
         oldprlookup[pr.classrace][pr.person] = pr
 
     # now update
-    for prun in eventordata.personruns:
+    for prun in personruns:
         try:
             probj = \
             oldprlookup[prun.get_fkey('classrace')][prun.get_fkey('person')]
@@ -343,6 +343,3 @@ def update_personruns(eventordata):
             update_db_entry(probj, prun, [], [], ['person', 'classrace'], ['person', 'classrace'])
     
     PersonRun.objects.bulk_create(newprs)
-    # done
-
-
