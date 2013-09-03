@@ -13,9 +13,12 @@ class BaseData(object):
 
 
 class ClubMember(BaseData):
-    def __init__(self, sinrs=[], lastname=None, firstname=None, email=None,
+    def __init__(self, sinrs=None, lastname=None, firstname=None, email=None,
     eventor_id=None, organisation=None):
-        self.SInrs = sinrs
+        if sinrs is not None:
+            self.SInrs = sinrs
+        else:
+            self.SInrs = []
         self.lastname = lastname 
         self.firstname = firstname
         self.email = email
@@ -33,6 +36,7 @@ class ClubMember(BaseData):
             self.email = None
 
     def parse_competitiondetails(self, xml):
+        print self.SInrs
         org = xml.find('.//OrganisationId')
         if org is not None:
             self.organisation = org.text
@@ -41,7 +45,9 @@ class ClubMember(BaseData):
             if ccard.find('PunchingUnitType').attrib['value'] == 'SI':
                 sinr = ccard.find('CCardId').text
                 if sinr not in self.SInrs:
+                    print sinr,
                     self.SInrs.append(sinr)
+        print self.SInrs
 
 class Event(BaseData):
     def __init__(self, eventxml, eventid):
