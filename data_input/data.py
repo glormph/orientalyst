@@ -155,24 +155,19 @@ class EventorData(object):
             return False
 
     def add_competition_data(self, clubmembers):
-        competitors = []
-        for clubmember in clubmembers[:10]:
-            try:
-                logger.info('Getting competition details for clubmember with'
-                'ID {0}, {1}, {2}.'.format(clubmember.eventorID,
-                clubmember.firstname,
-                clubmember.lastname))
-                compxml = self.connection.download_competition_data(clubmember.eventorID)
-            except HTTPError, e:
-                if e.code == 404: # no data in eventor on certain competitor
-                    logger.warning('No competition data for competitor ID '
-                    '{0}'.format(clubmember.eventorID))
-                    continue
-            else:
-                clubmember.parse_competitiondetails(compxml) 
-                competitors.append(clubmember)
-            time.sleep(1)
-        return competitors
+        logger.info('Getting competition details for clubmembers')
+        clubmember_lookup = {x.eventorID:x for x in clubmembers}
+        try:
+            compxml = self.connection.download_competition_data()
+        except HTTPError, e:
+            # FIXME!
+            if e.code == 404:
+                raise
+
+        for comp in compxml:
+            clubmember = clubmember_lookup[comp.find('.//PersonId').text]
+            clubmember.parse_competitiondetails(comp) 
+        return clubmembers
    
     def process_member_result_xml(self, xml, clubmember):
         logger.info('Processing member race xml for member ID {0}, containing '

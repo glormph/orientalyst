@@ -36,7 +36,6 @@ class ClubMember(BaseData):
             self.email = None
 
     def parse_competitiondetails(self, xml):
-        print self.SInrs
         org = xml.find('.//OrganisationId')
         if org is not None:
             self.organisation = org.text
@@ -45,9 +44,7 @@ class ClubMember(BaseData):
             if ccard.find('PunchingUnitType').attrib['value'] == 'SI':
                 sinr = ccard.find('CCardId').text
                 if sinr not in self.SInrs:
-                    print sinr,
                     self.SInrs.append(sinr)
-        print self.SInrs
 
 class Event(BaseData):
     def __init__(self, eventxml, eventid):

@@ -19,8 +19,8 @@ class EventorConnection(object):
         self.apicall = 'persons/organisations/{0}?includeContactDetails=true'.format(orgnr)
         return self.download()
     
-    def download_competition_data(self, eventor_id): 
-        self.apicall = 'competitor/{0}'.format(eventor_id)
+    def download_competition_data(self):
+        self.apicall = 'competitors?organisationId={0}'.format(constants.ORGANISATION_ID)
         return self.download()
     
     def download_events(self, eventorID, fromdate=None, todate=None):
@@ -31,7 +31,6 @@ class EventorConnection(object):
         if todate is not None:
             url = '{0}&toDate={1}-{2}-{3}'.format(url, str(todate.year),
                     str(todate.month).zfill(2), str(todate.day).zfill(2) )
-        print url
         self.apicall = url
         return self.download()
 
