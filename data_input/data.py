@@ -110,11 +110,14 @@ class EventorData(object):
                     raise
             else:
                 # results are added to existing races in by parser
+                # FIXME club start checking may be unneccessary, since we
+                # download results of one member and have checked which races
+                # he/she has ran
                 results_toparse = self.check_races_with_club_starts(self.events[eventid])
-                self.parser.set_races_as_classvars(events=self.events,
-                        eventraces=self.eventraces, classraces=self.classraces)
+                already_parsed = self.populate_with_parsed_models([], [], None)
                 for resultlist in resultxml:
-                    self.parser.xml_parse(resultlist, to_parse_eventresults=results_toparse)
+                    self.parser.xml_parse(resultlist, already_parsed,
+                               to_parse_eventresults=results_toparse)
 
     def get_classraces_as_list(self):
         """Format some data for easy access by db module"""
@@ -174,33 +177,57 @@ class EventorData(object):
     def process_member_result_xml(self, xml, clubmember):
         logger.info('Processing member race xml for member ID {0}, containing '
          '{1} events.'.format(clubmember.eventorID, len(xml)))
+        amount_ev, amount_evr, amount_cr, amount_pr  = \
+                            self.get_amounts_processed_races()
         racedata = {'events': [], 'eventraces': [], 'classraces': []}
-        # parse xml and create data models
-        self.parser.set_races_as_classvars(events=self.events,
-                eventraces=self.eventraces, classraces=self.classraces)
-        for resultlist in xml:
-            parsed = self.parser.xml_parse(resultlist, clubmember)
-            racedata['events'].extend(parsed['events'])
-            racedata['eventraces'].extend(parsed['eventraces'])
-            racedata['classraces'].extend(parsed['classraces'])
-            self.fill_model_lists(racedata['events'], self.events)
-            self.parser.set_races_as_classvars(events=self.events)
-        # make personruns
-        logger.debug('Creating {0} PersonRun '
-        'objects'.format(len(racedata['classraces'])))
-        for cr in racedata['classraces']:
-            self.personruns.append(PersonRun(clubmember, cr))
         
-        self.fill_model_lists(racedata['events'], self.events)
-        self.fill_model_lists(racedata['eventraces'], self.eventraces)
-        for cr in racedata['classraces']:
+        # parse xml and create data models
+        already_parsed = self.populate_with_parsed_models([], [], None)
+        for resultlist in xml:
+            parsed = self.parser.xml_parse(resultlist, already_parsed, clubmember)
+            already_parsed = self.populate_with_parsed_models({
+                    'events':parsed['events'], 
+                    'eventraces': parsed['eventraces']},
+                    parsed['classraces'], clubmember)
+
+        amount_ev_after, amount_evr_after, amount_cr_after, amount_pr_after  = \
+                            self.get_amounts_processed_races()
+        logger.info('Created {0} new events, {1} eventraces, {2} classraces '
+        'and {3} personruns'.format(
+            amount_ev_after - amount_ev,
+            amount_evr_after - amount_evr,
+            amount_cr_after - amount_cr,
+            amount_pr_after - amount_pr))
+    
+    def get_amounts_processed_races(self):
+        # A bit unneccessary, but I want to be able to check the logs how many
+        # things are made right now when testing
+        nr_of_personruns = len(self.personruns)
+        nr_of_events = len(self.events.values())
+        nr_of_eventraces = len(self.eventraces.values())
+        nr_of_classraces = len([y for x in self.classraces.values() for y in
+                                x.values()])
+        return (nr_of_events, nr_of_eventraces, nr_of_classraces,
+                    nr_of_personruns)
+
+    def populate_with_parsed_models(self, events_eventraces, classraces, clubmember):
+        # populate self.events and self.eventraces which are single depth dicts
+        for k in events_eventraces:
+            racedict = getattr(self, k)
+            for x in events_eventraces[k]:
+                racedict[x.eventorID] = x
+            setattr(self, k, racedict)
+        
+        # populate self.classraces which is a 2-depth dict. Also make
+        # personruns here.
+        for cr in classraces:
             if cr.fkeys['eventrace'].eventorID not in self.classraces:
                 self.classraces[cr.fkeys['eventrace'].eventorID] = {}
             self.classraces[cr.fkeys['eventrace'].eventorID][cr.classname] = cr
-
-    def fill_model_lists(self, models, classvar):
-        for x in models:
-            classvar[x.eventorID] = x
+            self.personruns.append(PersonRun(clubmember, cr))
+        
+        return {'events': self.events, 'eventraces': self.eventraces,
+                        'classraces': self.classraces}
 
     def check_races_with_club_starts(self, event):
         """Returns races of a certain event in which at least one clubmember
@@ -220,7 +247,6 @@ class EventorData(object):
     def get_person_event_combinations(self):
         logger.info('Filtering classraces to download results of')
         allclassraces = self.get_classraces_as_list()
-        print allclassraces
         personruns_to_download = {}
         for pr in self.personruns:
             cr = pr.fkeys['classrace']
