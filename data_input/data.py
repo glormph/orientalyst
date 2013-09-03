@@ -34,7 +34,7 @@ class EventorData(object):
         logger.info('Got {0} members'.format(len(memberxml)))
         clubmembers = self.filter_competitor(memberxml, personid)
         # FIXME handle clubmembers==False error
-        self.add_competition_data(clubmembers)
+        self.competitors = self.add_competition_data(clubmembers)
     
     def create_clubmembers(self, memberobjs):
         competitors = []
@@ -110,7 +110,8 @@ class EventorData(object):
             else:
                 # results are added to existing races in by parser
                 results_toparse = self.check_races_with_club_starts(self.events[eventid])
-                self.parser.set_races_as_classvars(self.events, self.eventraces, self.classraces)
+                self.parser.set_races_as_classvars(events=self.events,
+                        eventraces=self.eventraces, classraces=self.classraces)
                 self.parser.xml_parse(resultxml, to_parse_eventresults=results_toparse)
 
     def get_classraces_as_list(self):
@@ -133,7 +134,11 @@ class EventorData(object):
         # filters mmebers on an eventorid
         if eventorid is None:
             clubmembers = [ClubMember() for x in memberxml]
-            return [cm.parse_personXML(x) for cm,x in zip(clubmembers,memberxml)]
+            for cm,xml in zip(clubmembers, memberxml):
+                cm.parse_personXML(xml)
+            logger.info('Creating {0} clubmember '
+                                    'objects'.format(len(clubmembers)))
+            return clubmembers
         else:
             for member in memberxml:
                 cm = ClubMember()
@@ -147,7 +152,7 @@ class EventorData(object):
 
     def add_competition_data(self, clubmembers):
         competitors = []
-        for clubmember in clubmembers[:1]:
+        for clubmember in clubmembers[:10]:
             try:
                 logger.info('Getting competition details for clubmember with'
                 'ID {0}, {1}, {2}.'.format(clubmember.eventorID,
@@ -170,18 +175,21 @@ class EventorData(object):
          '{1} events.'.format(clubmember.eventorID, len(xml)))
         racedata = {'events': [], 'eventraces': [], 'classraces': []}
         # parse xml and create data models
-        self.parser.set_races_as_classvars(self.events, self.eventraces, self.classraces)
+        self.parser.set_races_as_classvars(events=self.events,
+                eventraces=self.eventraces, classraces=self.classraces)
         for resultlist in xml:
             parsed = self.parser.xml_parse(resultlist, clubmember)
             racedata['events'].extend(parsed['events'])
             racedata['eventraces'].extend(parsed['eventraces'])
             racedata['classraces'].extend(parsed['classraces'])
+            self.fill_model_lists(racedata['events'], self.events)
+            self.parser.set_races_as_classvars(events=self.events)
         # make personruns
         logger.debug('Creating {0} PersonRun '
         'objects'.format(len(racedata['classraces'])))
         for cr in racedata['classraces']:
             self.personruns.append(PersonRun(clubmember, cr))
-        # fill self.classraces, self.eventraces, self.events
+        
         self.fill_model_lists(racedata['events'], self.events)
         self.fill_model_lists(racedata['eventraces'], self.eventraces)
         for cr in racedata['classraces']:

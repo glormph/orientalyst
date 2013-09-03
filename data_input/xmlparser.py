@@ -1,24 +1,16 @@
 import logging
 from data_input.inputmodels import Event, EventRace, ClassRace
-logger = logging.getLogger('data_input')
+logger = logging.getLogger('xmlparser')
 
 class EventorXMLParser(object):
     def __init__(self):
         pass
     
-    def set_races_as_classvars(self, events, eventraces, classraces):
-        self.events = events
-        self.eventraces = eventraces
-        self.classraces = classraces
+    def set_races_as_classvars(self, **kwargs):
+        for k in kwargs:
+            setattr(self, k, kwargs[k])
     
     def xml_parse(self, xml, clubmember=None, to_parse_eventresults=None):
-        if xml.tag == 'ResultListList':
-            for resultlist in xml:
-                return self.parse_results(resultlist, clubmember, to_parse_eventresults)
-        elif xml.tag == 'ResultList':
-            return self.parse_results(xml, clubmember, to_parse_eventresults)
-    
-    def parse_results(self, xml, clubmember=None, to_parse_eventresults=None):
         # map result to Event
         logger.debug('Parsing eventor XML')
         eventxml = xml.find('Event')
