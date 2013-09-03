@@ -93,7 +93,8 @@ class EventorData(object):
         """Gets results for races, downloading from eventor for each 
         event/personcombination, then processing."""
         results_to_download = self.get_person_event_combinations()
-        logger.info('Getting results for processed events')
+        logger.info('Getting results for {0} processed events'.format( \
+                            len(results_to_download)))
         for cr in results_to_download:
             eventid = cr.fkeys['eventrace'].fkeys['event'].eventorID
             personid = results_to_download[cr].eventorID
@@ -112,14 +113,14 @@ class EventorData(object):
                 results_toparse = self.check_races_with_club_starts(self.events[eventid])
                 self.parser.set_races_as_classvars(events=self.events,
                         eventraces=self.eventraces, classraces=self.classraces)
-                self.parser.xml_parse(resultxml, to_parse_eventresults=results_toparse)
+                for resultlist in resultxml:
+                    self.parser.xml_parse(resultlist, to_parse_eventresults=results_toparse)
 
     def get_classraces_as_list(self):
         """Format some data for easy access by db module"""
         classraces = []
         for erid in self.classraces:
-            for cr in self.classraces[erid].values():
-                classraces.append(cr)
+            classraces.extend(self.classraces[erid].values())
         return classraces
 
     def reformat_split_results(self, classraces):
@@ -217,12 +218,16 @@ class EventorData(object):
         return races_with_club_start
 
     def get_person_event_combinations(self):
+        logger.info('Filtering classraces to download results of')
+        allclassraces = self.get_classraces_as_list()
+        print allclassraces
         personruns_to_download = {}
         for pr in self.personruns:
-            if pr.fkeys['classrace'] not in self.classraces:
+            cr = pr.fkeys['classrace']
+            if cr not in allclassraces:
                 continue
             try:
-                p = personruns_to_download[pr.fkeys['classrace']]
+                p = personruns_to_download[cr]
             except KeyError:
                 personruns_to_download[pr.fkeys['classrace']] = \
                                                     pr.fkeys['person']

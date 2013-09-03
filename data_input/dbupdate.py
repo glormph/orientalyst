@@ -201,7 +201,7 @@ def update_eventraces(eventraces):
                                 ['eventorID', 'startdate',
                                 'lightcondition', 'name'],
                                 model_fkeys=['event'], data_fkeys=['event'])
-    
+
 
 def update_classraces(eventraces, classraces):
     # get classraces in db
@@ -269,6 +269,7 @@ def update_results(classraces):
                     ['cr', 'eventorID', 'firstname', 'lastname',
                                         'position', 'time', 'status', 'diff'])
     # new results: bulk_create, then get result obj and attach to result datas
+    print newresults
     if newresults:
         Result.objects.bulk_create(newresults) 
         newres_cr = Result.objects.filter(classrace__in=[x.classrace \

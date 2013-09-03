@@ -80,10 +80,10 @@ class Command(BaseCommand):
         self.eventordata.get_results_of_races()
         self.update_db_results()
 
-    def update_all_recent_member_data(self, members):
+    def update_all_recent_member_data(self):
         members = dbupdate.get_all_members()
         clubmembers = self.eventordata.create_clubmembers(members)
-        self.eventordata.get_recent_races(members)
+        self.eventordata.get_recent_races(clubmembers[:2])
         self.update_db_races()
         self.eventordata.get_results_of_races()
         self.update_db_results()
@@ -106,6 +106,6 @@ class Command(BaseCommand):
         classraces = self.eventordata.get_classraces_as_list()
         classraces = self.eventordata.reformat_split_results(classraces)
         logger.info('Updating results')
-        dbupdate.update_results(self.eventordata.classraces)
+        dbupdate.update_results(classraces)
         logger.info('Updating splits')
-        dbupdate.update_splits(self.eventordata.classraces)
+        dbupdate.update_splits(classraces)
