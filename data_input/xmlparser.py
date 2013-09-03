@@ -1,6 +1,6 @@
 import logging
 from data_input.inputmodels import Event, EventRace, ClassRace
-logger = logging.getLogger('data_input')
+logger = logging.getLogger('xmlparser')
 
 class EventorXMLParser(object):
     def __init__(self):
@@ -24,7 +24,7 @@ class EventorXMLParser(object):
             logger.debug('Created an event, id {0}'.format(eventid))
         
         # loop through event results by class
-        racedata = {'events': [event], 'eventraces': [], 'classraces':[]}
+        racedata = {'events': [], 'eventraces': [], 'classraces':[]}
         classresults = xml.findall('ClassResult')
         logger.debug('Found {0} classresults'.format(len(classresults)))
         for classresult in classresults:
@@ -46,6 +46,7 @@ class EventorXMLParser(object):
                                 eventclassinfo, classname, races_to_parse, add_results)
             for k in parsed:
                 racedata[k].extend(parsed[k])
+            racedata['events'] = [event]
         logger.debug('All xml parsed')
         return racedata
     
@@ -220,15 +221,13 @@ class EventorXMLParser(object):
             # Check if the requested clubmember did start, if not: next raceresult.
             if personresult.find('RaceResult') is not None:
                 for raceresult in personresult.findall('RaceResult'):
-                    if personid == competitorid and \
-                            raceresult.find('Result').find('CompetitorStatus').attrib['value'] != \
-                            'DidNotStart':
+                    status = raceresult.find('Result').find('CompetitorStatus').attrib['value']
+                    if personid == competitorid and status == 'OK':
                         eventraceid = raceresult.find('EventRace').find('EventRaceId').text
                         status_ok[classname] = eventraceid
             else:
-                if personid == competitorid and \
-                        personresult.find('Result').find('CompetitorStatus').attrib['value'] != \
-                        'DidNotStart':
+                status = personresult.find('Result').find('CompetitorStatus').attrib['value']
+                if personid == competitorid and status == 'OK':
                     eventraceid = classresult.find('EventClass').find('.//EventRaceId').text
                     status_ok[classname] = eventraceid
         return status_ok
