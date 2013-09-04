@@ -1,5 +1,7 @@
+# vim: set fileencoding=utf-8 :
 from graphs.models import Person
-from accounts import accounts
+from django.shortcuts import get_object_or_404, get_list_or_404, render, redirect
+import accounts
 
 def signup(request):
     # MAY BELONG IN ANOTHER MODULE THEN GRAPHS
@@ -7,19 +9,25 @@ def signup(request):
     if request.method == 'POST':
         mail = request.POST['email']
         usercheck = accounts.UserChecks(request.user)
-        if not usercheck.user_email_exists(mail):
-            msg = 'Your email address could not be found on eventor. Please '
-            'enter correct mail addresss'
-            return signup_error(msg)
+        person = usercheck.get_person_by_email(mail)
+        if person is False:
+            msg = """Ditt email kunde inte hittas på eventor. Var god och
+            använd email addressen som du använder på idrottonline."""
+            return signup_error(request, msg)
         elif usercheck.account_exists(mail):
-            msg = 'Your email address is already coupled to an account. '
-            'Please try to login, or click the forgot my password link.'
+            msg = """Ditt email har redan ett konto. Var god och försök att
+            logga in istället."""
+            return signup_error(request, msg)
         else:
             username = request.POST['username']
             password = request.POST['password']
             errmsg = usercheck.check_account_details(username, password)
             if errmsg.values() != [None, None]:
-                return signup_error(errmsg)
+                if errmsg['password'] is not None:
+                    msg = errmsg['password']
+                if errmsg['username'] is not None:
+                    msg = errmsg['username']
+                return signup_error(request, msg)
             
             # create useraccount and send mail
             user = accounts.create_user_account(mail, password, person, username)
@@ -27,10 +35,10 @@ def signup(request):
             # upon clicking the link, we make the person account status 'new'
             
             # return a mail sent template
-            return render() # FIXME
+            return render(request, '') # FIXME
     else:
         return render(request, 'registration/signup.html')
 
 
-def signup_error(msg):
-    return render(request, 'registration/signup.html', {'error': msg})
+def signup_error(request, msg):
+    return render(request, 'registration/signup.html', {'errors': msg})

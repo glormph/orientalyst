@@ -1,5 +1,7 @@
+# vim: set fileencoding=utf-8 :
+from django.core.exceptions import ObjectDoesNotExist
 from graphs.models import PersonRun, Person, Si
-
+from django.contrib.auth.models import User
 
 class UserChecks(object):
     def __init__(self, user):
@@ -12,20 +14,26 @@ class UserChecks(object):
             self.person = Person.objects.get(user=self.user.id)
             self.sis = Si.objects.filter(person=self.person)
     
-    def user_email_exists(self, email):
+    def get_person_by_email(self, email):
         try:
-            person = Person.objects.get(email=email)
-        except DoesNotExist:
+            return Person.objects.get(email=email)
+        except ObjectDoesNotExist:
+            return False
+    
+    def account_exists(self, email):
+        try:
+            user = User.objects.get(email=email)
+        except ObjectDoesNotExist:
             return False
         else:
             return True
-    
-    def check_account_details(username, password):
+
+    def check_account_details(self, username, password):
         errmsg = {'password': None, 'username': None}
         # FIXME check if username is ok with regex, check if password ok
         if len(password) < 8:
-            errmsg['password'] = 'Ditt password är för kort. Använd minst 8 '
-                                'tecken'
+            errmsg['password'] = """Ditt password är för kort. Använd minst 8
+                                tecken"""
         # check password has no forbidden chars??
         # check username exists
         # check username has right chars
@@ -73,12 +81,14 @@ def create_user_account(email, password, person, username=None):
     user.first_name = person.firstname
     user.last_name = person.lastname
     user.save()
-
     return user    
 
-def password_reset_for_new_user(person):
-    for person in persons:
-        form = PasswordResetForm({'email': person.email}) 
-        if form.is_valid():
-            form.save(from_email=constants.FROM_EMAIL)
+def send_new_account_mail(person):
+    pass
 
+
+#    for person in persons:
+#        form = PasswordResetForm({'email': person.email}) 
+#        if form.is_valid():
+#            form.save(from_email=constants.FROM_EMAIL)
+#
