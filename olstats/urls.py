@@ -8,7 +8,7 @@ urlpatterns = patterns('',
     url(r'^accounts/logout/', 'django.contrib.auth.views.logout',
         {'next_page': '/'}),
     url(r'^accounts/login/', 'django.contrib.auth.views.login'),
-    url(r'^accounts/signup/', 'graphs.views.signup'),
+    url(r'^accounts/signup/', 'accounts.views.signup'),
     )
 
 urlpatterns += patterns('graphs.views',
