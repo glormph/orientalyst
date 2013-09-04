@@ -1,5 +1,5 @@
 # vim: set fileencoding=utf-8 :
-from graphs.models import Person
+from models import Person
 from django.shortcuts import get_object_or_404, get_list_or_404, render, redirect
 import accounts
 

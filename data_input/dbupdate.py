@@ -4,9 +4,9 @@ import constants
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordResetForm
-from graphs.models import Person, Event, EventRace, Classrace, PersonRun, \
-                        Result, Si, Split 
-
+from graphs.models import Event, EventRace, Classrace, PersonRun, \
+                        Result, Split 
+from accounts.models import Person, Si
 def get_all_members():
     return Person.objects.all()
 

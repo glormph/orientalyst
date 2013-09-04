@@ -12,7 +12,8 @@ from lxml import etree
 import mocks, data
 import dbupdate as iu
 from django.test import TestCase
-from graphs.models import Person, Si, Event, EventRace, Classrace, Result, Split, PersonRun
+from graphs.models import Event, EventRace, Classrace, Result, Split, PersonRun
+from accounts.models import Person, Si
 
 class PasswordResetNewUserTest(TestCase):
     fixtures = ['auth_user_testdata.json', 'graphs_person_testdata.json']

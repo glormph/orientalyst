@@ -1,6 +1,7 @@
 # vim: set fileencoding=utf-8 :
 from django.core.exceptions import ObjectDoesNotExist
-from graphs.models import PersonRun, Person, Si
+from models import Person, Si
+from graphs.models import PersonRun
 from django.contrib.auth.models import User
 
 class UserChecks(object):
