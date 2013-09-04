@@ -25,6 +25,7 @@ class ClubMember(BaseData):
         self.eventorID = str(eventor_id)
         self.classraces = {}
         self.organisation = organisation
+        self.fkeys = {}
 
     def parse_personXML(self, person):
         self.lastname = person.find('.//Family').text.encode('utf-8')

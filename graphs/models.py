@@ -11,7 +11,10 @@ class Person(models.Model):
     eventor_id = models.IntegerField()
     firstname = models.CharField(max_length=40)
     lastname = models.CharField(max_length=40)
+    email = models.EmailField()
     user = models.ForeignKey(User)
+    account_status = models.CharField(max_length=20)
+    # account status can be ['new', 'active', 'inactive', 'unregistered']
 
 
 class Si(models.Model):

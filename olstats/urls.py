@@ -4,10 +4,11 @@ from django.contrib import admin
 admin.autodiscover()
 
 urlpatterns = patterns('',
-    url(r'^logout/', 'django.contrib.auth.views.logout',
-        {'next_page': '/'}),
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^login/', 'django.contrib.auth.views.login'),
+    url(r'^accounts/logout/', 'django.contrib.auth.views.logout',
+        {'next_page': '/'}),
+    url(r'^accounts/login/', 'django.contrib.auth.views.login'),
+    url(r'^accounts/signup/', 'graphs.views.signup'),
     )
 
 urlpatterns += patterns('graphs.views',
@@ -20,6 +21,8 @@ urlpatterns += patterns('graphs.views',
         url(r'^urllogin/(?P<random_id>\w+)/', 'urllogin'),
         )
 
+# oversee this stuff, we will not use the password reset stuff as we planned
+# to, but maybe in the normal way
 urlpatterns += patterns('',
         url(r'^user/password_reset/$', 'django.contrib.auth.views.password_reset', 
             {'post_reset_redirect' : '/user/password_reset/done/'}, name="password_reset"),
@@ -30,3 +33,4 @@ urlpatterns += patterns('',
               {'post_reset_redirect' : '/user/password/done/'}),
         url(r'^user/password/done/$', 'django.contrib.auth.views.password_reset_complete'),
 )
+

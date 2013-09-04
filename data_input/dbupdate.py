@@ -48,80 +48,34 @@ def update_db_persons(data):
     """Feed downloaded eventor data, db will be updated with persons."""
     new_members, new_persons = [], []
     old_members, eventorid_person_lookup = get_old_members(data)
+    
     for competitor in data.competitors:
+        # Update person table
         if competitor not in old_members:
-            # first get user account since it needs to exist before updating db
-            useraccount = create_user_account(competitor)
             person = Person(eventor_id=competitor.eventorID,
                     firstname=competitor.firstname, lastname=competitor.lastname,
-                    user=useraccount)
+                    email=competitor.email, account_status='unregistered')
             person.save() # no need for bulk insert, usually few persons
             competitor.attach_django_object(person)
             new_persons.append( person )
             new_members.append( competitor )
-
-    for competitor in old_members:
-        # add person and sinr django objects to competitors
-        competitor.attach_django_object(eventorid_person_lookup[competitor.eventorID])
-        competitor.si_fkeys = {}
-        for sinr in competitor.SInrs:
-            siobj = Si.objects.get(si=int(sinr), 
-                person_id=eventorid_person_lookup[competitor.eventorID])
-            competitor.si_fkeys[int(sinr)] = siobj
-        # FIXME upsert in case of name/email change?
-    for person, member in zip(new_persons, new_members):
-        member.si_fkeys = {}
-        for sinr in member.SInrs:
-            si = Si(si=int(sinr), person=person)
-            si.save()
-            member.si_fkeys[int(sinr)] = si
-    
-    return old_members, new_members
-
-def create_user_account(person):
-    # should probably be put in file with other user/account code
-    # check if user account exists:
-    try:
-        existing_user = User.objects.get(email=person.email)
-    except User.DoesNotExist:
-        pass
-    else:
-        return existing_user
-
-    # username, generate one
-    username = person.firstname
-    samefirstname = User.objects.all().filter(first_name=username)
-    nr = len(samefirstname)
-    if nr > 0:
-        username += str(nr)
-    username = username.lower()
-    
-    # generate random password
-    chars = string.ascii_letters + string.digits
-    random.seed = (os.urandom(1024))
-    password = ''.join(random.choice(chars) for i in range(12))
-
-    # empty mail people get an account too. Wont be mailing them though.
-    if not person.email:
-        person.email = '{0}_{1}@localhost'.format(person.firstname,
-                            person.lastname)
+        # FIXME also update old members, and check if member leaves club ->
+        # inactive 
         
-    # now create user and save
-    user = User.objects.create_user(username, person.email, password)
-    user.first_name = person.firstname
-    user.last_name = person.lastname
-    user.save()
-    
-    return user
+        # Update SI nr table
+        competitor.attach_django_object(eventorid_person_lookup[competitor.eventorID])
+        competitor.si_django_objs = {}
+        for sinr in competitor.SInrs:
+            try:
+                siobj = Si.objects.get(si=int(sinr), 
+                    person_id=eventorid_person_lookup[competitor.eventorID])
+            except DoesNotExist:
+                # new si nr
+                siobj = Si(si=int(sinr), person=competitor.get_django_object())
+                siobj.save()
+            finally:
+                competitor.si_django_objs[int(sinr)] = siobj
 
-def password_reset_for_new_users(persons):
-    for person in persons:
-        # for testing, email addresses to be ignored
-        if person.email.split('@')[1] == 'localhost':
-            continue
-        form = PasswordResetForm({'email': person.email}) 
-        if form.is_valid():
-            form.save(from_email=constants.FROM_EMAIL)
 
 def get_lookup_by_type(d, k):
     if type(d) == dict:
@@ -269,7 +223,6 @@ def update_results(classraces):
                     ['cr', 'eventorID', 'firstname', 'lastname',
                                         'position', 'time', 'status', 'diff'])
     # new results: bulk_create, then get result obj and attach to result datas
-    print newresults
     if newresults:
         Result.objects.bulk_create(newresults) 
         newres_cr = Result.objects.filter(classrace__in=[x.classrace \
