@@ -1,6 +1,7 @@
 # vim: set fileencoding=utf-8 :
 import sys, os, string, random
 import constants
+from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordResetForm
 from graphs.models import Person, Event, EventRace, Classrace, PersonRun, \
@@ -48,7 +49,6 @@ def update_db_persons(data):
     """Feed downloaded eventor data, db will be updated with persons."""
     new_members, new_persons = [], []
     old_members, eventorid_person_lookup = get_old_members(data)
-    
     for competitor in data.competitors:
         # Update person table
         if competitor not in old_members:
@@ -62,19 +62,18 @@ def update_db_persons(data):
         # FIXME also update old members, and check if member leaves club ->
         # inactive 
         
+        else:
+            competitor.attach_django_object(eventorid_person_lookup[competitor.eventorID])
+        
         # Update SI nr table
-        competitor.attach_django_object(eventorid_person_lookup[competitor.eventorID])
-        competitor.si_django_objs = {}
         for sinr in competitor.SInrs:
             try:
                 siobj = Si.objects.get(si=int(sinr), 
-                    person_id=eventorid_person_lookup[competitor.eventorID])
-            except DoesNotExist:
+                    person_id=competitor.get_django_object() )
+            except ObjectDoesNotExist:
                 # new si nr
                 siobj = Si(si=int(sinr), person=competitor.get_django_object())
                 siobj.save()
-            finally:
-                competitor.si_django_objs[int(sinr)] = siobj
 
 
 def get_lookup_by_type(d, k):
