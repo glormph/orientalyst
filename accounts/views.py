@@ -1,8 +1,10 @@
 # vim: set fileencoding=utf-8 :
 from urlparse import urljoin
 from django.shortcuts import get_object_or_404, get_list_or_404, render, redirect
+from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
-from django.utils.http import base36_to_int
+from django.utils.http import int_to_base36, base36_to_int
+from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.views.decorators.debug import sensitive_post_parameters
@@ -41,10 +43,10 @@ def signup(request):
             # create useraccount and send mail
             user = accounts.create_user_account(mail, password, person, username)
             current_site = get_current_site(request)
-            import sys
+            uidb36 = int_to_base36(user.pk)
             token = default_token_generator.make_token(user)
-            link = '/'.join(['http:/', current_site.domain, 'accounts/activate',
-            token])
+            link = '/'.join(['http:/', current_site.domain,
+            'accounts/activate?uidb36={0}&token={1}'.format(uidb36,token)])
             accounts.send_new_account_mail(user, link)
             
             # create a urllogin with timestamp for finer control of time
@@ -73,15 +75,19 @@ def activate_account(request, uidb36=None, token=None,
     """
     assert uidb36 is not None and token is not None  # checked by URLconf
     if post_reset_redirect is None:
-        post_reset_redirect = reverse('django.contrib.auth.views.password_reset_complete')
+        post_reset_redirect = reverse(home)
     try:
         uid_int = base36_to_int(uidb36)
         user = User.objects.get(pk=uid_int)
     except (ValueError, OverflowError, User.DoesNotExist):
+        raise
         user = None
     
     if user is not None and token_generator.check_token(user, token):
+        import sys
+        user.backend = 'django.contrib.auth.backends.ModelBackend'
+        login(request, user)
         return HttpResponseRedirect(post_reset_redirect)
     else:
-        return HttpResponseRedirect(home)
+        return HttpResponseRedirect(reverse(home))
     
