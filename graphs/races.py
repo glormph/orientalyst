@@ -9,18 +9,18 @@ class RaceList(object):
     
     def get_latest_races(self, amount):
         """Returns last x races of a competitor"""
-        racelist = self.racelist.order_by('-classrace__startdate')
+        racelist = self.racelist.order_by('-classrace__eventrace__startdate')
         racelist = [Race( x.classrace ) for x in racelist]
         return racelist[:amount]
     
     def get_all_races_by_year(self):
         self.allraces = {}
-        races = self.racelist.order_by('-classrace__startdate')
+        races = self.racelist.order_by('-classrace__eventrace__startdate')
         for r in races:
-            if not r.classrace.startdate.year in self.allraces:
-                self.allraces[ r.classrace.startdate.year ] = []
+            if not r.classrace.eventrace.startdate.year in self.allraces:
+                self.allraces[ r.classrace.eventrace.startdate.year ] = []
 
-            self.allraces[ r.classrace.startdate.year ].append( Race(r.classrace) )
+            self.allraces[ r.classrace.eventrace.startdate.year ].append( Race(r.classrace) )
         
         # return year
         return sorted(self.allraces.keys())[::-1]
@@ -29,12 +29,12 @@ class RaceList(object):
 
 class Race(object):
     def __init__(self, classrace):
-        if classrace.event.name == classrace.name:
-            self.name = classrace.name
+        if classrace.eventrace.event.name == classrace.eventrace.name:
+            self.name = classrace.eventrace.name
         else:
-            self.name = '{0} - {1}'.format(classrace.event.name.encode('utf-8'),
-                    classrace.name.encode('utf-8'))
+            self.name = '{0} - {1}'.format(classrace.eventrace.event.name.encode('utf-8'),
+                    classrace.eventrace.name.encode('utf-8'))
         self.classname = classrace.classname
-        self.date = classrace.startdate
+        self.date = classrace.eventrace.startdate
         self.cr_id = classrace.id
     

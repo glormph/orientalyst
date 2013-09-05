@@ -8,7 +8,8 @@
 {% block topheader %}
 <div id="topheader">
 {% if not user.is_loggedin %}
-<a href="/login/">LOGIN</a>
+<a href="/accounts/login/">LOGIN</a> eller
+<a href="/accounts/signup/">ANMÄL</a>
 {% else %}
 
 <div id="loggedintext">
