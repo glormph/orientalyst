@@ -1,8 +1,10 @@
 # vim: set fileencoding=utf-8 :
+
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.mail import send_mail
+from django.contrib.auth.models import User
 from models import Person, Si
 from graphs.models import PersonRun
-from django.contrib.auth.models import User
 
 class UserChecks(object):
     def __init__(self, user):
@@ -84,9 +86,20 @@ def create_user_account(email, password, person, username=None):
     user.save()
     return user    
 
-def send_new_account_mail(person):
-    pass
+def send_new_account_mail(user, link):
+    subject = 'Välkommen till orientalyst!'
+    msg = """Du har nu anmält dig till orientalyst. För att vi ska dubbelkolla
+    att det stämmer, behöver du klicka på nedanstående länken för att aktivera
+    ditt konto. Länken är endast giltig i 15 minuter.
 
+    {0}
+    
+    Inte en aning var detta mail kom ifrån? Då kan någon av misstag ha använt
+    ditt mailaddress för att registrera sig, och du kan lugnt ignorera detta
+    mail.
+    """.format(link)
+    send_mail(subject, msg, 'boekeltjuh@hotmail.com', [user.email], fail_silently=False)
+    
 
 #    for person in persons:
 #        form = PasswordResetForm({'email': person.email}) 

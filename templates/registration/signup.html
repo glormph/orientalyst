@@ -1,0 +1,34 @@
+{% extends "graphs/base.html" %}
+{% block content %}
+
+
+<div id="content">
+<div id="centergraphs">
+
+<div id="welcome">
+<div id="resultstitle">
+Anmäl dig till Orientalyst
+</div>
+<div id="resultscontent">
+{% if errors %}
+<div id="errormessage">{{ errors }}</div>
+{% endif %}
+
+<form method="post" action="">
+{% csrf_token %}
+<p>email (samma som för idrottonline login) <input name="email"> <!-- 8 chars
+at least --></p>
+<p>password <input name="password"> <!-- 8 chars at least --></p>
+<p>användarnamn (om du vill) <input name="username"> <!-- May be blank to get
+automatic username, only
+aA-zZ, 0-9, -_  --></p>
+<input type="submit" value="Anmäl">
+</form>
+
+</div>
+</div>
+</div>
+</div>
+
+{% endblock content %}
+

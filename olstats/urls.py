@@ -9,6 +9,8 @@ urlpatterns = patterns('',
         {'next_page': '/'}),
     url(r'^accounts/login/', 'django.contrib.auth.views.login'),
     url(r'^accounts/signup/', 'accounts.views.signup'),
+    url(r'^accounts/activate/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)',
+    'accounts.views.activate_account'),
     )
 
 urlpatterns += patterns('graphs.views',

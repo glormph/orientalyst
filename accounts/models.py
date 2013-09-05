@@ -6,6 +6,11 @@ class UserProfile(models.Model):
     eventor_id = models.IntegerField()
 
 
+class AccountActivationTimestamp(models.Model):
+    user = models.ForeignKey(User)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+
 class Person(models.Model):
     eventor_id = models.IntegerField()
     firstname = models.CharField(max_length=40)
