@@ -6,11 +6,16 @@ class RaceList(object):
         if self.user.is_loggedin():
             self.racelist = \
                 PersonRun.objects.all().filter(person=self.user.get_competitorID())
+        else:
+            self.racelist = None
     
     def get_latest_races(self, amount):
         """Returns last x races of a competitor"""
-        racelist = self.racelist.order_by('-classrace__eventrace__startdate')
-        racelist = [Race( x.classrace ) for x in racelist]
+        if self.racelist is not None:
+           racelist = self.racelist.order_by('-classrace__eventrace__startdate')
+           racelist = [Race( x.classrace ) for x in racelist]
+        else:
+            return None
         return racelist[:amount]
     
     def get_all_races_by_year(self):

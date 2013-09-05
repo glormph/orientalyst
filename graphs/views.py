@@ -15,6 +15,10 @@ def check_user_logged_in(request):
         return True
 
 
+def front_page(request):
+    return render(request, 'graphs/home.html', {'user': user, 'racelist':
+                    latestraces})
+
 def home(request):
     """Just show list of classraces -- how many?- and welcome message/news. 
     Showing all races may be too much, but at least give an option to show more."""
