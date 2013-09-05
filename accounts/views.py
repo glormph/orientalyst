@@ -6,12 +6,12 @@ from django.http import HttpResponseRedirect
 from django.utils.http import int_to_base36, base36_to_int
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
-from django.contrib.auth.tokens import default_token_generator
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.cache import never_cache
 from django.contrib.sites.models import get_current_site
-from models import Person, AccountActivationTimestamp
+from models import Person
 from graphs.views import home
+from tokens import default_token_generator
 import accounts
 
 def signup(request):
@@ -46,13 +46,8 @@ def signup(request):
             uidb36 = int_to_base36(user.pk)
             token = default_token_generator.make_token(user)
             link = '/'.join(['http:/', current_site.domain,
-            'accounts/activate?{0}-{1}'.format(uidb36,token)])
+            'accounts/activate/{0}-{1}'.format(uidb36,token)])
             accounts.send_new_account_mail(user, link)
-            
-            # create a urllogin with timestamp for finer control of time
-            ts_db = AccountActivationTimestamp(user=user)
-            ts_db.save()
-            # upon clicking the link, we make the person account status 'new'
             
             # return a mail sent template
             return render(request, 'registration/signup_successful.html')
@@ -92,5 +87,6 @@ def activate_account(request, uidb36=None, token=None,
 
         return HttpResponseRedirect(post_reset_redirect)
     else:
+        # TODO make nice error message page here w 404
         return HttpResponseRedirect(reverse(home))
     
