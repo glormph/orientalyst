@@ -19,7 +19,7 @@ def front_page(request):
     return render(request, 'graphs/home.html', {'user': user, 'racelist':
                     latestraces})
 
-def home(request):
+def home(request, message=None):
     """Just show list of classraces -- how many?- and welcome message/news. 
     Showing all races may be too much, but at least give an option to show more."""
     # get logged in user
@@ -27,7 +27,7 @@ def home(request):
     racelist = races.RaceList(user)
     latestraces = racelist.get_latest_races(10)
     return render(request, 'graphs/home.html', {'user': user, 'racelist':
-                    latestraces})
+                    latestraces, 'message': message})
 
 
 def about(request): 
