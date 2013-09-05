@@ -4,10 +4,11 @@ from accounts.models import Person
 from django.shortcuts import get_object_or_404, get_list_or_404, render, redirect
 from django.http import Http404
 from django.contrib.auth.views import password_reset
-from graphs import plots, userchecker, races
+from graphs import plots, races
+from accounts import accounts
 
 def check_user_logged_in(request):
-    user = userchecker.User(request.user)
+    user = accounts.UserChecks(request.user)
     if not user.is_loggedin():
         return False
     else:
@@ -18,7 +19,7 @@ def home(request):
     """Just show list of classraces -- how many?- and welcome message/news. 
     Showing all races may be too much, but at least give an option to show more."""
     # get logged in user
-    user = userchecker.User(request.user)
+    user = accounts.UserChecks(request.user)
     racelist = races.RaceList(user)
     latestraces = racelist.get_latest_races(10)
     return render(request, 'graphs/home.html', {'user': user, 'racelist':
@@ -26,7 +27,7 @@ def home(request):
 
 
 def about(request): 
-    user = userchecker.User(request.user)
+    user = accounts.UserChecks(request.user)
 
     return render(request, 'graphs/about.html', {'user': user})
 
@@ -47,7 +48,7 @@ def my_profile(request, change_psw=False, first_time=False):
                 })
             # redirect to profile, 
     elif request.method == 'GET':
-        user = userchecker.User(request.user)
+        user = accounts.UserChecks(request.user)
         if not user.is_loggedin() and not change_psw:
             raise Http404 # FIXME display error and redirect home page instead
         return render(request, 'graphs/profile.html', {'psw': change_psw,
@@ -74,7 +75,7 @@ def userraces(request):
     if not check_user_logged_in(request):
         return home(request)
     # get all user races
-    user = userchecker.User(request.user)
+    user = accounts.UserChecks(request.user)
     racelist = races.RaceList(user)
     # display them in template with nice formatting and date
     return render(request, 'graphs/userraces.html', {'racelist': racelist, 'user': user})
@@ -85,7 +86,7 @@ def race(request, race_id):
     if not check_user_logged_in(request):
         return home(request)
     # first check if user has run this race or if race exists
-    user = userchecker.User(request.user)
+    user = accounts.UserChecks(request.user)
     racelist = races.RaceList(user)
 
     if not user.is_loggedin():
