@@ -40,8 +40,6 @@ class AccountActivateTokenGenerator(PasswordResetTokenGenerator):
         if (self._num_seconds(self._today()) - ts) > \
                     settings.PASSWORD_RESET_TIMEOUT_SECONDS:
             return False
-        import sys
-        sys.stderr.write(str(self._num_seconds(self._today()) - ts))
         return True
     
     def _num_seconds(self, dt):
