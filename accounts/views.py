@@ -46,7 +46,7 @@ def signup(request):
             uidb36 = int_to_base36(user.pk)
             token = default_token_generator.make_token(user)
             link = '/'.join(['http:/', current_site.domain,
-            'accounts/activate?uidb36={0}&token={1}'.format(uidb36,token)])
+            'accounts/activate?{0}-{1}'.format(uidb36,token)])
             accounts.send_new_account_mail(user, link)
             
             # create a urllogin with timestamp for finer control of time
@@ -82,11 +82,14 @@ def activate_account(request, uidb36=None, token=None,
     except (ValueError, OverflowError, User.DoesNotExist):
         raise
         user = None
-    
     if user is not None and token_generator.check_token(user, token):
-        import sys
+        person = Person.objects.get(email=user.email)
+        person.user = user
+        person.account_status = 'new'
+        person.save()
         user.backend = 'django.contrib.auth.backends.ModelBackend'
         login(request, user)
+
         return HttpResponseRedirect(post_reset_redirect)
     else:
         return HttpResponseRedirect(reverse(home))
