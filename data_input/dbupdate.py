@@ -1,5 +1,4 @@
 # vim: set fileencoding=utf-8 :
-import sys, os, string, random
 import constants
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import User
@@ -7,8 +6,8 @@ from django.contrib.auth.forms import PasswordResetForm
 from graphs.models import Event, EventRace, Classrace, PersonRun, \
                         Result, Split 
 from accounts.models import Person, Si
-def get_all_members():
-    return Person.objects.all()
+def get_all_members_with_accounts():
+    return Person.objects.filter(account_status='active')
 
 def get_members(member_ids=[]):
     return Person.objects.filter(eventor_id__in=member_ids)
