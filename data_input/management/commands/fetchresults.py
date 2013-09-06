@@ -49,17 +49,22 @@ class Command(BaseCommand):
             logger.info('Another fetchresults process is running. Waiting until '
                         'finished')
             time.sleep(10)
-
-        if options['persons'] is True:
-            self.update_person_db()
-        elif options['newcompetitor'] is not None:
-            members = dbupdate.get_members([options['newcompetitor']])
-            self.get_newmember_data(members)
-        else:
-            self.update_all_recent_member_data()
         
-        # clean PID from db
-        this_process.delete()
+        try:
+            if options['persons'] is True:
+                self.update_person_db()
+            elif options['newcompetitor'] is not None:
+                members = dbupdate.get_members([options['newcompetitor']])
+                self.get_newmember_data(members)
+            else:
+                self.update_all_recent_member_data()
+        except:
+            pass # TODO some error reporting would be nice
+            # also this try clause is of course really big, but I dont want
+            # anything to go wrong with whats in the finally part.
+        finally:
+            # clean PID from db
+            this_process.delete()
         logger.info('Finished updating')
 
     def update_person_db(self):
