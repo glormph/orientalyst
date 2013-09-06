@@ -80,7 +80,7 @@ svg.selectAll("circle").data(data[plotname]).enter().append("svg:circle")
 .attr("id", function(d) { return d.eid+"#"+ "%s"; })
 
 
-highlight_point(plotname, "2664");
+highlight_point(plotname, highlight_eid);
     """ % self.name
     
     def render_plot(self):
@@ -236,5 +236,5 @@ class MultiplePointsPerPersonPlot(BasePlot):
     .attr("r", 2)
     .attr("class", "smallpoints");
 
-highlight_point(plotname, "2664");
+highlight_point(plotname, highlight_eid);
     """
