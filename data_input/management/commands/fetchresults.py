@@ -1,8 +1,10 @@
 import logging
+import os
+import time
+from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
 from data_input import dbupdate, data
-from optparse import make_option
-
+from data_input.models import FetchresultsRunning
 logger = logging.getLogger('data_input')
 
 class Command(BaseCommand):
@@ -20,12 +22,13 @@ class Command(BaseCommand):
         make_option('--onlyold', '-o', action='store_true', default=False, dest='onlyold'),)
 
     def handle(self, *args, **options):
+        # put PID in db so we get a queue ticket
+        mypid = os.getpid()
+        this_process = FetchresultsRunning(pid=mypid)
+        this_process.save()
         self.eventordata = data.EventorData()
         
         # FIXME check if options are ok
-        # set amount of past days to download results from
-        newperiod = None
-        oldperiod = 7
         
         if None not in [options['events'], options['period']]:
             pass # TODO error here
@@ -38,6 +41,15 @@ class Command(BaseCommand):
             oldperiod = options['period'] # newperiod should always be None?
             # better if no new people are fetched when updating w period.
         
+        # wait until we have the first pk
+        while True:
+            allfetchers = FetchresultsRunning.objects.all()
+            if this_process.pk == min([x.pk for x in allfetchers]):
+                break
+            logger.info('Another fetchresults process is running. Waiting until '
+                        'finished')
+            time.sleep(10)
+
         if options['persons'] is True:
             self.update_person_db()
         elif options['newcompetitor'] is not None:
@@ -45,19 +57,11 @@ class Command(BaseCommand):
             self.get_newmember_data(members)
         else:
             self.update_all_recent_member_data()
-
+        
+        # clean PID from db
+        this_process.delete()
         logger.info('Finished updating')
-        return
-###################################################
 
-        # FIXME check if problems with competitor download
-        # if none downloaded, stop here (wrong ev_id, connection problems)
-        if options['onlyold'] is False:
-            logger.info('Updating person database...')
-            # FIXME new members and personid?
-                
-            # dbupdate.password_reset_for_new_users(new_members)
-   ############################## 
     def update_person_db(self):
         logger.info('Downloading competitors from eventor')
         self.eventordata.get_competitors()
