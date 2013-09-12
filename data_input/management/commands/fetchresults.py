@@ -1,6 +1,5 @@
 import logging
 import os
-import time
 from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
 from data_input import dbupdate, data
@@ -15,11 +14,13 @@ class Command(BaseCommand):
         dest='persons'),) + (
         make_option('--newcompetitor', '-n', type='int', 
             default=None, dest='newcompetitor'),) + (
-        make_option('--event', '-e', type='int', default=None, dest='events',
-                        action="append"), ) + (
-        make_option('--period', '-t', type='int', default=None,
-                        dest='period'),) + (
-        make_option('--onlyold', '-o', action='store_true', default=False, dest='onlyold'),)
+        make_option('--all', '-a', default=False, dest='all',
+                        action="store_true"), ) + (
+        #make_option('--event', '-e', type='int', default=None, dest='events',
+        #                action="append"), ) + (
+        #make_option('--period', '-t', type='int', default=None,
+        #                dest='period'),) + (
+        #make_option('--onlyold', '-o', action='store_true', default=False, dest='onlyold'),)
 
     def handle(self, *args, **options):
         # put PID in db so we get a queue ticket
@@ -30,26 +31,57 @@ class Command(BaseCommand):
         
         # FIXME check if options are ok
         
-        if None not in [options['events'], options['period']]:
-            pass # TODO error here
-        if options['onlyold'] is True and \
-                [options['events'], options['period'], 
-                options['competitor']]!=[None, None, None]:
-            pass # TODO error here, onlyold cannot be combined with other options
+#        if None not in [options['events'], options['period']]:
+#            pass # TODO error here
+#        if options['onlyold'] is True and \
+#                [options['events'], options['period'], 
+#                options['competitor']]!=[None, None, None]:
+#            pass # TODO error here, onlyold cannot be combined with other options
+#        
+#        elif options['period'] is not None:
+#            oldperiod = options['period'] # newperiod should always be None?
+#            # better if no new people are fetched when updating w period.
         
-        elif options['period'] is not None:
-            oldperiod = options['period'] # newperiod should always be None?
-            # better if no new people are fetched when updating w period.
+        # put a ticket in db for download all recent results
+        rr_tickets = \
+            FetchRecentResultsTickets.objects.filter(is_download_time=True)
+        if options['all'] is True and rr_tickets.count() == 0:
+            recent_result_ticket = FetchRecentResultsTickets(is_download_time=True)
+            recent_result_ticket.save()
+            fetch_recent_results = True
+        elif rr_tickets.count() != 0:
+            fetch_recent_results = True
+        else:
+            fetch_recent_results = False
+
+        # Check if fetchresults already running, abort if yes
+        allfetchers = FetchresultsRunning.objects.all()
+        if this_process.pk != min([x.pk for x in allfetchers]):
+            logger.info('Another fetchresults process is running. Aborting.'
+            this_process.delete()
+            return
         
-        # wait until we have the first pk
-        while True:
-            allfetchers = FetchresultsRunning.objects.all()
-            if this_process.pk == min([x.pk for x in allfetchers]):
-                break
-            logger.info('Another fetchresults process is running. Waiting until '
-                        'finished')
-            time.sleep(10)
-        
+        # scan db for new persons, download data
+        person_tickets = FetchPersonResultsTickets.objects.all()
+        for ticket in person_tickets:
+            member = dbupdate.get_members([ticket.eventor_id])
+            self.get_newmember_data(member)
+            ticket.delete()
+        # FIXME this sort of makes the whole 'get events, then results' thing
+        # useless. Maybe we should first download per member all events
+        # and put a column in classrace db that results are/arenot fetched.
+        # then scan that column for which events to fetch. Eventor is kind of
+        # sketchy in its downtime, so that maybe a good idea.
+        # however, right now, we run with the STUPID version
+
+        # scan db for recent events to download and download that
+        # FIXME should be guarded, eventor borks at any moment.
+        if rr_tickets is True:
+            self.update_person_db()
+            self.update_all_recent_member_data()
+            recent_result_tickets.delete()
+
+        # remove pid entry.
         try:
             if options['persons'] is True:
                 self.update_person_db()
