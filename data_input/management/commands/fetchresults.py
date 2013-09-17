@@ -47,7 +47,7 @@ class Command(BaseCommand):
         # Check if fetchresults already running, abort if yes
         allfetchers = FetchresultsRunning.objects.all()
         if this_process.pk != min([x.pk for x in allfetchers]):
-            logger.info('Another fetchresults process is running. Aborting.'
+            logger.info('Another fetchresults process is running. Aborting.')
             this_process.delete()
             return
         
