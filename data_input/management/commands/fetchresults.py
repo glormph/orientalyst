@@ -15,14 +15,15 @@ class Command(BaseCommand):
         make_option('--newcompetitor', '-n', type='int', 
             default=None, dest='newcompetitor'),) + (
         make_option('--all', '-a', default=False, dest='all',
-                        action="store_true"), ) + (
-        #make_option('--event', '-e', type='int', default=None, dest='events',
-        #                action="append"), ) + (
-        #make_option('--period', '-t', type='int', default=None,
-        #                dest='period'),) + (
-        #make_option('--onlyold', '-o', action='store_true', default=False, dest='onlyold'),)
+                        action="store_true"), ) 
 
     def handle(self, *args, **options):
+        # when e.g. initializing db, we only download persons
+        # no need to check for already running processes
+        if options['persons'] is True:
+            self.update_person_db()
+            return
+            
         # put PID in db so we get a queue ticket
         mypid = os.getpid()
         this_process = FetchresultsRunning(pid=mypid)
@@ -30,17 +31,6 @@ class Command(BaseCommand):
         self.eventordata = data.EventorData()
         
         # FIXME check if options are ok
-        
-#        if None not in [options['events'], options['period']]:
-#            pass # TODO error here
-#        if options['onlyold'] is True and \
-#                [options['events'], options['period'], 
-#                options['competitor']]!=[None, None, None]:
-#            pass # TODO error here, onlyold cannot be combined with other options
-#        
-#        elif options['period'] is not None:
-#            oldperiod = options['period'] # newperiod should always be None?
-#            # better if no new people are fetched when updating w period.
         
         # put a ticket in db for download all recent results
         rr_tickets = \
