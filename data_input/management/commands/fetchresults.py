@@ -1,5 +1,5 @@
 import logging
-import os
+import os, sys
 from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
 from data_input import dbupdate, data
@@ -18,6 +18,9 @@ class Command(BaseCommand):
                         action="store_true"), ) 
 
     def handle(self, *args, **options):
+        sys.stdout.write('oh noes')
+        self.eventordata = data.EventorData()
+        sys.stdout.write('oh noes')
         # when e.g. initializing db, we only download persons
         # no need to check for already running processes
         if options['persons'] is True:
@@ -28,7 +31,6 @@ class Command(BaseCommand):
         mypid = os.getpid()
         this_process = FetchresultsRunning(pid=mypid)
         this_process.save()
-        self.eventordata = data.EventorData()
         
         # FIXME check if options are ok
         
