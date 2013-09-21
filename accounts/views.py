@@ -1,4 +1,5 @@
 # vim: set fileencoding=utf-8 :
+import os
 from urlparse import urljoin
 from django.shortcuts import get_object_or_404, get_list_or_404, render, redirect
 from django.core.urlresolvers import reverse
@@ -9,6 +10,7 @@ from django.contrib.auth.models import User
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.cache import never_cache
 from django.contrib.sites.models import get_current_site
+
 from models import Person
 from graphs.views import home
 from tokens import default_token_generator
@@ -84,7 +86,8 @@ def activate_account(request, uidb36=None, token=None,
         person = Person.objects.get(email=user.email)
         if person.account_status != 'unregistered':
             return HttpResponseRedirect(post_reset_redirect)
-        call_command('fetchresults -n {0}'.format(person.eventor_id))
+        os.system('fetchresults --newcompetitor '
+            '{0} &'.format(str(person.eventor_id))
         person.user = user
         person.account_status = 'new'
         person.save()

@@ -3,7 +3,7 @@ import os
 from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
 from data_input import dbupdate, data
-from data_input.models import FetchresultsRunning
+from data_input.models import * 
 logger = logging.getLogger('data_input')
 
 class Command(BaseCommand):
