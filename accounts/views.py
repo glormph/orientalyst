@@ -87,7 +87,7 @@ def activate_account(request, uidb36=None, token=None,
         if person.account_status != 'unregistered':
             return HttpResponseRedirect(post_reset_redirect)
         os.system('fetchresults --newcompetitor '
-            '{0} &'.format(str(person.eventor_id))
+            '{0} &'.format(str(person.eventor_id)))
         person.user = user
         person.account_status = 'new'
         person.save()
