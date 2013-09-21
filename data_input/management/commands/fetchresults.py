@@ -43,6 +43,11 @@ class Command(BaseCommand):
             fetch_recent_results = True
         else:
             fetch_recent_results = False
+        
+        # put ticket in db for newcompetitor download
+        if options['newcompetitor'] is not None:
+            ticket = FetchPersonResultsTickets(eventor_id=int(options['newcompetitor']))
+            ticket.save()
 
         # Check if fetchresults already running, abort if yes
         allfetchers = FetchresultsRunning.objects.all()
@@ -52,11 +57,6 @@ class Command(BaseCommand):
             return
         
         # scan db for new persons, download data
-        person_tickets = FetchPersonResultsTickets.objects.all()
-        for ticket in person_tickets:
-            member = dbupdate.get_members([ticket.eventor_id])
-            self.get_newmember_data(member)
-            ticket.delete()
         # FIXME this sort of makes the whole 'get events, then results' thing
         # useless. Maybe we should first download per member all events
         # and put a column in classrace db that results are/arenot fetched.
@@ -66,20 +66,19 @@ class Command(BaseCommand):
 
         # scan db for recent events to download and download that
         # FIXME should be guarded, eventor borks at any moment.
-        if rr_tickets is True:
-            self.update_person_db()
-            self.update_all_recent_member_data()
-            recent_result_tickets.delete()
 
         # remove pid entry.
         try:
-            if options['persons'] is True:
+            if rr_tickets is True:
                 self.update_person_db()
-            elif options['newcompetitor'] is not None:
-                members = dbupdate.get_members([options['newcompetitor']])
-                self.get_newmember_data(members)
-            else:
                 self.update_all_recent_member_data()
+                for rrt in rr_tickets:
+                    rrt.delete()
+            person_tickets = FetchPersonResultsTickets.objects.all()
+            for ticket in person_tickets:
+                member = dbupdate.get_members([ticket.eventor_id])
+                self.get_newmember_data(member)
+                ticket.delete()
         except:
             pass # TODO some error reporting would be nice
             # also this try clause is of course really big, but I dont want
