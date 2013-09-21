@@ -36,13 +36,9 @@ class Command(BaseCommand):
         rr_tickets = \
             FetchRecentResultsTickets.objects.filter(is_download_time=True)
         if options['all'] is True and rr_tickets.count() == 0:
+            logger.info('Creating a ticket to fetch all recent results')
             recent_result_ticket = FetchRecentResultsTickets(is_download_time=True)
             recent_result_ticket.save()
-            fetch_recent_results = True
-        elif rr_tickets.count() != 0:
-            fetch_recent_results = True
-        else:
-            fetch_recent_results = False
         
         # put ticket in db for newcompetitor download
         if options['newcompetitor'] is not None:
@@ -69,12 +65,15 @@ class Command(BaseCommand):
 
         # remove pid entry.
         try:
-            if rr_tickets is True:
+            rr_tickets = FetchRecentResultsTickets.objects.all()
+            if rr_tickets.count() > 0:
+                logger.info('Ticket to update recent results exists')
                 self.update_person_db()
                 self.update_all_recent_member_data()
                 for rrt in rr_tickets:
                     rrt.delete()
             person_tickets = FetchPersonResultsTickets.objects.all()
+            logger.info('Ticket(s) to get new personresults exist(s)')
             for ticket in person_tickets:
                 member = dbupdate.get_members([ticket.eventor_id])
                 self.get_newmember_data(member)
