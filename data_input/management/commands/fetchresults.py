@@ -18,10 +18,12 @@ class Command(BaseCommand):
                         action="store_true"), ) 
 
     def handle(self, *args, **options):
+        logger.info('Running fetchresults')
         self.eventordata = data.EventorData()
         # when e.g. initializing db, we only download persons
         # no need to check for already running processes
         if options['persons'] is True:
+            logger.info('Only updating person db table')
             self.update_person_db()
             return
             
@@ -42,6 +44,7 @@ class Command(BaseCommand):
         
         # put ticket in db for newcompetitor download
         if options['newcompetitor'] is not None:
+            logger.info('Adding ticket for downloading new competitor data')
             ticket = FetchPersonResultsTickets(eventor_id=int(options['newcompetitor']))
             ticket.save()
 
@@ -73,13 +76,14 @@ class Command(BaseCommand):
                 for rrt in rr_tickets:
                     rrt.delete()
             person_tickets = FetchPersonResultsTickets.objects.all()
-            logger.info('Ticket(s) to get new personresults exist(s)')
             for ticket in person_tickets:
+                logger.info('Ticket(s) to get new personresults exist(s)')
                 member = dbupdate.get_members([ticket.eventor_id])
                 self.get_newmember_data(member)
                 ticket.delete()
         except:
-            pass # TODO some error reporting would be nice
+            raise
+            # TODO some error reporting would be nice
             # also this try clause is of course really big, but I dont want
             # anything to go wrong with whats in the finally part.
         finally:
