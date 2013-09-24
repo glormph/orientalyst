@@ -1,0 +1,60 @@
+{% extends "graphs/base.html" %}
+
+
+{% block content %}
+
+<div id="content">
+
+<div id="sidemenu" class="column">
+
+<div id="sidemenucontent">Senaste tävlingar<br>
+{% if racelist %}
+{% for race in racelist %}
+<a href="/race/{{ race.cr_id }}">{{ race.name }}</a> <br>
+{% endfor %}
+{% endif %}
+</div>
+</div>
+<div id="centergraphs">
+
+<div id="welcome">
+
+<div id="resultstitle">
+Profil för {{ user.fullname }}
+</div>
+<div id="resultscontent">
+{% if firsttime %}
+VIKTIGT! <br>
+Du är på den här siten för första gången. Det första du borde göra är att ändra
+ditt password. Nu!
+{% endif %}
+
+{% if firsttime or psw %}
+Ändra ditt password här:
+<form action="/profile/" method="POST">
+{% csrf_token %}
+<table>
+<tr><td>Nytt password: </td><td><input type="password" name="newpass"></td></tr>
+<tr><td>Upprepa nytt password: </td><td> <input type="password"
+name="repeatnewpass"></td></tr>
+<tr><td><input type="submit"></td></tr>
+</table>
+</form>
+{% endif %}
+
+
+{% if not firsttime and not psw %}
+
+Eventor ID {{ user.get_eventorID}} <br>
+Sportident
+{% for si in user.get_sportident %}
+{{ si }}<br>
+{% endfor %}
+
+{% endif %}
+
+</div>
+</div>
+</div>
+</div>
+{% endblock content %}
