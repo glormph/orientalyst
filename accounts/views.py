@@ -22,7 +22,6 @@ def signup_error(request, msg):
 
 
 def signup(request):
-    # MAY BELONG IN ANOTHER MODULE THEN GRAPHS
     """Signs up new users"""
     if request.method == 'POST':
         mail = request.POST['email']
@@ -32,7 +31,7 @@ def signup(request):
             msg = """Ditt email kunde inte hittas på eventor. Var god och
             använd email addressen som du använder på idrottonline."""
             return signup_error(request, msg)
-        elif usercheck.account_exists(mail):
+        elif usercheck.account_exists_and_activated(mail):
             msg = """Ditt email har redan ett konto. Var god och försök att
             logga in istället."""
             return signup_error(request, msg)
@@ -47,8 +46,13 @@ def signup(request):
                     msg = errmsg['username']
                 return signup_error(request, msg)
             
-            # create useraccount and send mail
-            user = accounts.create_user_account(mail, password, person, username)
+            # check there is not already a user account, else create account
+            # user accounts can lie around unactivated
+            user = usercheck.account_exists(mail)
+            if user is False:
+                user = accounts.create_user_account(mail, password, person, username)
+
+            # send activation mail
             current_site = get_current_site(request)
             uidb36 = int_to_base36(user.pk)
             token = default_token_generator.make_token(user)

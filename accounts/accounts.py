@@ -23,9 +23,25 @@ class UserChecks(object):
         except ObjectDoesNotExist:
             return False
     
+    def account_exists_and_activated(self, email):
+        user = self.account_exists(email)
+        if user is False or self.account_activated(user.pk) is False:
+            return False
+        else:
+            return True
+
     def account_exists(self, email):
+        """Checks if user account exists, AND if it has been activated"""
         try:
             user = User.objects.get(email=email)
+        except ObjectDoesNotExist:
+            return False
+        else:
+            return user
+
+    def account_activated(self, userid):
+        try:
+            person = Person.objects.get(user_id=userid)
         except ObjectDoesNotExist:
             return False
         else:
