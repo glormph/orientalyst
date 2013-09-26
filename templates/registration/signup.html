@@ -16,9 +16,8 @@ Anmäl dig till Orientalyst
 
 <form method="post" action="">
 {% csrf_token %}
-<p>email (samma som för idrottonline login) <input name="email"> <!-- 8 chars
-at least --></p>
-<p>password <input name="password"> <!-- 8 chars at least --></p>
+<p>email (samma som för idrottonline login) <input type="text" name="email"></p>
+<p>password <input type="password" name="password"> <!-- 8 chars at least --></p>
 <p>användarnamn (om du vill) <input name="username"> <!-- May be blank to get
 automatic username, only
 aA-zZ, 0-9, -_  --></p>
