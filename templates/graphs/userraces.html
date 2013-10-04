@@ -1,28 +1,21 @@
 {% extends "graphs/base.html" %}
-
 {% load dictlookup %}
-
 {% block content %}
 
-<div id="content">
+    <div class="container">
+      <!-- Example row of columns -->
+      <div class="col-lg-2">
+      </div>
+      <div class="col-lg-6">
+        <h4>ALLA TÄVLINGAR FÖR {{ user.fullname|upper }}</h4>
+        {% for year in racelist.get_all_races_by_year %}
+        <h5>{{ year }}</h5>
 
-<div id="yearracecolumn">
-<div id="yearracetitle">ALLA TÄVLINGAR FÖR {{ user.fullname|upper }}</div>
-
-{% for year in racelist.get_all_races_by_year %}
-<div class="yearraces">
-<h2 class="year">{{ year }}</h2>
-
-{% for race in racelist.allraces|lookup:year %}
-<div class="line">
-<a class="yearrace" href="/race/{{ race.cr_id }}/">{{ race.name }}</a>, {{ race.date }}, {{ race.classname }}
-</div>
-{% endfor %}
-
-</div>
-
-{% endfor %}
-</div>
-
-</div>
+        {% for race in racelist.allraces|lookup:year %}
+        <p><a href="/race/{{ race.cr_id }}/">{{ race.name }}</a>, {{ race.date }}, {{ race.classname }}</p>
+        {% endfor %}
+        {% endfor %}
+      </div>
+      <div class="col-lg-2">
+      </div>
 {% endblock content %}

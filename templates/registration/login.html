@@ -1,32 +1,30 @@
 {% extends "graphs/base.html" %}
 {% block content %}
 
+    <div class="container">
+      <div class="col-lg-2">
+      </div>
+      <div class="col-lg-6">
 
-<div id="content">
-<div id="centergraphs">
+<h4>Login till Orientalyst</h4>
 
-<div id="welcome">
-<div id="resultstitle">
-Login till Orientalyst
-</div>
-<div id="resultscontent">
 {% if form.errors %}
 Your username and password didn't match. Please try again.
 {% endif %}
 
-<form method="post" action="">
+<form method="post" action="" role="form" class="form-horizontal">
+<div class="form-group">
 {% csrf_token %}
 
-{{ form.username.label_tag }}  {{ form.username}}
-{{ form.password.label_tag }}  {{ form.password }}
-<input type="hidden" name="next" value="{{ next }}" />
-<input type="submit" value="login">
+<p>{{ form.username.label_tag }}  {{ form.username}}</p>
+<p>{{ form.password.label_tag }}  {{ form.password }}</p>
+<p><input type="hidden" name="next" value="{{ next }}" /></p>
+<button type="submit" value="login" class="btn btn-default">Login</button>
+</div>
 </form>
 
-<a href="/user/password_reset/">Jag har glömt mitt password</a>
-</div>
-</div>
-</div>
-</div>
-
+<p><a href="/user/password_reset/">Jag har glömt mitt password</a></p>
+        </div>
+        <div class="col-lg-2">
+      </div>
 {% endblock content %}

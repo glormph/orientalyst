@@ -3,40 +3,38 @@
 
 {% block content %}
 
-<div id="content">
 
-<div id="sidemenu" class="column">
-
-{% if user.is_loggedin %}
-<div id="sidemenucontent">Senaste tävlingar<br>
-{% if not racelist %}
-<p>Inga tävlingar hittade</p>
-{% endif %}
-{% for race in racelist %}
-<a href="/race/{{ race.cr_id }}">{{ race.name }}</a> <br>
-{% endfor %}
-</div>
-{% endif %}
-</div>
-
-
-<div id="centergraphs">
-
-<div id="welcome">
-
-<div id="resultstitle">
-Välkommen till Orientalyst!
-</div>
-<div id="resultscontent">
-{% if message %}
-<p>{{ message }}</p>
-{% endif %}
+    <div class="container">
+      <!-- Example row of columns -->
+      <div class="col-lg-2">
+        {% if user.is_loggedin %}
+        <h4>Senaste tävlingar</h4>
+        {% if not racelist %}
+        <p>Inga tävlingar hittade!</p>
+        {% endif %}
+        {% for race in racelist %}
+            <a href="/race/{{ race.cr_id }}">{{ race.name }}</a> <br>
+        {% endfor %}
+        {% endif %}
+      </div>
+        <div class="col-lg-6">
+          <h4>Välkommen till Orientalyst!</h4>
 <p>Här kan du gå igenom dina orienteringsresultat och titta på grafer som visar
 tävlingsresultat på olika sätt. Resultaterna laddas ned från eventor.se, vilket
 betyder att bara de resultat som finns där kan visas här.
 </p>
+
+       </div>
+        <div class="col-lg-2">
+        </div>
+    </div>
+
 </div>
-</div>
-</div>
-</div>
+
+
+
+{% if message %}
+<p>{{ message }}</p>
+{% endif %}
+
 {% endblock content %}

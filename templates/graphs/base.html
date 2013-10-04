@@ -1,45 +1,58 @@
+<!DOCTYPE html>
 <html>
-<head>
-<title>Orientalyst - plots for orienteers</title>
-<link rel="stylesheet" content="text/css" href="{{ STATIC_URL }}style.css" >
-</head>
+  <head>
+    <title>Orientalyst - plots for orienteers</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8">
+    <!-- Bootstrap -->
+    <link href="{{ STATIC_URL }}bootstrap.min.css" rel="stylesheet" media="screen">
+    <link rel="stylesheet" content="text/css" href="{{ STATIC_URL }}custom.css" >
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="../../assets/js/html5shiv.js"></script>
+      <script src="../../assets/js/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
 <body>
+    
+    <div class="navbar navbar-inverse navbar-static-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
 
-{% block topheader %}
-<div id="topheader">
-{% if not user.is_loggedin %}
-<a href="/accounts/login/">LOGIN</a> eller
-<a href="/accounts/signup/">ANMÄL</a>
-{% else %}
+          </button>
+          <a class="navbar-brand" href="#">orientalyst</a>
+        </div>
+        <div class="collapse navbar-collapse">
+        {% if not user.is_loggedin %}
+          <ul class="nav navbar-nav">
+            <li><a href="/">Home</a></li>
+            <li><a href="/accounts/login/">LOGIN</a></li>
+            <li> <a href="/accounts/signup/">ANMÄL</a></li>
+        {% else %}
 
-<div id="loggedintext">
-Logged in as {{ user.alias }}
-</div>
+        <div id="loggedintext">
+        Logged in as {{ user.alias }}
+        </div>  
 
-<a href="/">HOME</a>
-<div class="dotspacer">&middot;</div>
-<a href="/races">DINA TÄVLINGAR</a>
-<div class="dotspacer">&middot;</div>
-<a href="/about">OM ORIENTALYST</a>
-<div class="dotspacer">&middot;</div>
-<a href="/accounts/logout">LOGOUT</a>
-{% endif %}
-</div>
-{% endblock topheader %}
-
-<div id="titlebar">
-<img id="logo" src="{{STATIC_URL}}logo.svg">
-<div id="logotext">orientalyst</div>
-</div>
+        <li><a href="/races">DINA TÄVLINGAR</a></li>
+        <li><a href="/about">OM ORIENTALYST</a></li>
+        <li><a href="/accounts/logout">LOGOUT</a></li>
+        {% endif %}
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </div>
 
 {% block content %}
 <div id="content">
 
 </div>
 {% endblock content %}
-
-<div id="footer">
-ANd a footer</div>
 
 </body>
 </html>

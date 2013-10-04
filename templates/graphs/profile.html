@@ -1,60 +1,45 @@
 {% extends "graphs/base.html" %}
-
-
 {% block content %}
 
-<div id="content">
+    <div class="container">
+      <!-- Example row of columns -->
+      <div class="col-lg-2">
 
-<div id="sidemenu" class="column">
+        <h4>Senaste tävlingar</h4>
+        {% if racelist %}
+        {% for race in racelist %}
+        <a href="/race/{{ race.cr_id }}">{{ race.name }}</a> <br>
+        {% endfor %}
+        {% endif %}
+      </div>
 
-<div id="sidemenucontent">Senaste tävlingar<br>
-{% if racelist %}
-{% for race in racelist %}
-<a href="/race/{{ race.cr_id }}">{{ race.name }}</a> <br>
-{% endfor %}
-{% endif %}
-</div>
-</div>
-<div id="centergraphs">
+      <div class="col-lg-6">
 
-<div id="welcome">
+        <h4>Profil för {{ user.fullname }}</h4>
 
-<div id="resultstitle">
-Profil för {{ user.fullname }}
-</div>
-<div id="resultscontent">
-{% if firsttime %}
-VIKTIGT! <br>
-Du är på den här siten för första gången. Det första du borde göra är att ändra
-ditt password. Nu!
-{% endif %}
-
-{% if firsttime or psw %}
-Ändra ditt password här:
-<form action="/profile/" method="POST">
-{% csrf_token %}
-<table>
-<tr><td>Nytt password: </td><td><input type="password" name="newpass"></td></tr>
-<tr><td>Upprepa nytt password: </td><td> <input type="password"
-name="repeatnewpass"></td></tr>
-<tr><td><input type="submit"></td></tr>
-</table>
-</form>
-{% endif %}
+        {% if psw %}
+        <p>Ändra ditt password här:</p>
+        <form action="/profile/" method="POST">
+        {% csrf_token %}
+        <table>
+        <tr><td>Nytt password: </td><td><input type="password" name="newpass"></td></tr>
+        <tr><td>Upprepa nytt password: </td><td> <input type="password"
+        name="repeatnewpass"></td></tr>
+        <tr><td><input type="submit"></td></tr>
+        </table>
+        </form>
 
 
-{% if not firsttime and not psw %}
+        {% else %}
 
-Eventor ID {{ user.get_eventorID}} <br>
-Sportident
-{% for si in user.get_sportident %}
-{{ si }}<br>
-{% endfor %}
+        Eventor ID {{ user.get_eventorID}} <br>
+        Sportident
+        {% for si in user.get_sportident %}
+        {{ si }}<br>
+        {% endfor %}
 
-{% endif %}
-
-</div>
-</div>
-</div>
-</div>
+        {% endif %}
+      </div>
+      <div class="col-lg-2">
+      </div>
 {% endblock content %}
