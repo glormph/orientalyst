@@ -32,8 +32,10 @@ def home(request, message=None):
 
 def about(request): 
     user = accounts.UserChecks(request.user)
-
-    return render(request, 'graphs/about.html', {'user': user})
+    racelist = races.RaceList(user)
+    latestraces = racelist.get_latest_races(10)
+    return render(request, 'graphs/about.html', {'user': user, 
+                            'racelist': latestraces})
 
 
 def my_profile(request, change_psw=False, first_time=False):
@@ -53,10 +55,12 @@ def my_profile(request, change_psw=False, first_time=False):
             # redirect to profile, 
     elif request.method == 'GET':
         user = accounts.UserChecks(request.user)
+        racelist = races.RaceList(user)
+        latestraces = racelist.get_latest_races(10)
         if not user.is_loggedin() and not change_psw:
             raise Http404 # FIXME display error and redirect home page instead
         return render(request, 'graphs/profile.html', {'psw': change_psw,
-                        'firsttime': first_time, 'user': user})
+                      'racelist': latestraces, 'firsttime': first_time, 'user': user})
 
 
 
