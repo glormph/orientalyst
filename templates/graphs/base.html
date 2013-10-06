@@ -28,20 +28,18 @@
           <a class="navbar-brand" href="#">orientalyst</a>
         </div>
         <div class="collapse navbar-collapse">
-        {% if not user.is_loggedin %}
           <ul class="nav navbar-nav">
-            <li><a href="/">Home</a></li>
+        {% if not user.is_loggedin %}
+            <li><a href="/">HOME</a></li>
             <li><a href="/accounts/login/">LOGIN</a></li>
-            <li> <a href="/accounts/signup/">ANMÄL</a></li>
+            <li><a href="/accounts/signup/">ANMÄL</a></li>
         {% else %}
 
-        <div id="loggedintext">
-        Logged in as {{ user.alias }}
-        </div>  
 
         <li><a href="/races">DINA TÄVLINGAR</a></li>
         <li><a href="/about">OM ORIENTALYST</a></li>
         <li><a href="/accounts/logout">LOGOUT</a></li>
+        Logged in as {{ user.alias }}
         {% endif %}
           </ul>
         </div><!--/.nav-collapse -->

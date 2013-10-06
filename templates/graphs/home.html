@@ -13,7 +13,7 @@
         <p>Inga tävlingar hittade!</p>
         {% endif %}
         {% for race in racelist %}
-            <a href="/race/{{ race.cr_id }}">{{ race.name }}</a> <br>
+            <p><a href="/race/{{ race.cr_id }}">{{ race.name }}</a></p>
         {% endfor %}
         {% endif %}
       </div>
