@@ -64,6 +64,7 @@ var data = new Array();
         {% endif %}
       </div>
         <div class="col-lg-6">
+        <h4>Plots</h4>
 {% if plots.showgraphs %}
 <div class="graphcolumn">
 {{ plots.plots.splits.render_html|safe}}
@@ -82,7 +83,10 @@ No splits found for this race
 
        </div>
         <div class="col-lg-2">
-            <h5>{{ plots.raceinfo.name }} - {{ plots.raceinfo.classname }} - {{ plots.raceinfo.date }}</h5>
+            <h4>Resultat</h4>
+            <h5>{{ plots.raceinfo.name }}</h5>
+            <h5>{{ plots.raceinfo.classname }}</h5>
+            <h5>{{ plots.raceinfo.date }}</h5>
             <p>Placering: {{ plots.results.position }}</p>
             <p>Tid: {{ plots.results.time }}</p>
             <p>Status: {{ plots.results.status }}</p>

@@ -47,7 +47,7 @@ class BasePlot(object):
 
     def base_html(self):
         return """
-        <div class="graph" id="%s"><div class="graphtitle">%s</div></div>
+        <div class="graph" id="%s"><h5>%s</h5></div>
 <script>
 var width = 350;
 var height = 200;
