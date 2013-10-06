@@ -49,12 +49,12 @@ class BasePlot(object):
         return """
         <div class="graph" id="%s"><h5>%s</h5></div>
 <script>
-var width = 350;
-var height = 200;
+var width = 500;
+var height = 300;
 var padding = 50;
 var plotname = "%s";
-var svg = d3.select("#%s").append("svg:svg").attr("width", 350).attr("height",
-200);
+var svg = d3.select("#%s").append("svg:svg").attr("width", width).attr("height",
+height);
 var highlight_eid = "%s";
 var xlab = "%s";
 var ylab = "%s";

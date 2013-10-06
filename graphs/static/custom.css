@@ -1,0 +1,56 @@
+@import url(http://fonts.googleapis.com/css?family=Montserrat:700);
+@import url(http://fonts.googleapis.com/css?family=Monda);
+
+.navbar-brand, h1, h2, h3, h4 {
+    font-family: Montserrat;
+}
+
+.navbar-brand {
+    font-size: 25px;
+}
+
+.navbar-nav {
+    font-family: Monda;
+    font-size: 15px;
+}
+
+p {
+    font-size: 12px;
+}
+
+
+.axis path, .axis line {
+fill: none;
+stroke: #000;
+shape-rendering: crispEdges;
+}
+
+.dot {
+stroke: #000;
+}
+
+
+.smallpoints {
+fill: grey;
+fill-opacity: 0.8;
+stroke-width: 1px;
+stroke:grey;
+stroke-opacity: 0.5;
+}
+
+.highlightpoints {
+fill: red;
+fill-opacity: 0.8;
+stroke-width: 1px;
+stroke:grey;
+stroke-opacity: 0.5;
+}
+
+text {
+font-family: Arial;
+font-size: 12px;
+}
+
+text.xTickNos {
+text-align: center;
+}
