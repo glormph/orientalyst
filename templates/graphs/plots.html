@@ -50,35 +50,21 @@ var data = new Array();
 
 </script>
 
-<div id="content">
-<div id="sidemenu" class="column">
-
-<div id="sidemenucontent">Senaste tävlingar<br>
-{% if racelist %}
-{% for race in racelist %}
-<a href="/race/{{ race.cr_id }}">{{ race.name }}</a> <br>
-{% endfor %}
-{% endif %}
-</div>
-</div>
-
+    <div class="container">
+      <!-- Example row of columns -->
+      <div class="col-lg-2">
+        {% if user.is_loggedin %}
+        <h4>Senaste tävlingar</h4>
+        {% if not racelist %}
+        <p>Inga tävlingar hittade!</p>
+        {% endif %}
+        {% for race in racelist %}
+            <p><a href="/race/{{ race.cr_id }}">{{ race.name }}</a></p>
+        {% endfor %}
+        {% endif %}
+      </div>
+        <div class="col-lg-6">
 {% if plots.showgraphs %}
-
-<div id="centergraphs" class="column">
-
-<div id="results">
-<div id="resultstitle">
-{{ plots.raceinfo.name }} - {{ plots.raceinfo.classname }} - {{ plots.raceinfo.date }}
-</div>
-
-<div id="resultscontent">
-Placering: {{ plots.results.position }}<br>
-Tid: {{ plots.results.time }}<br>
-Status: {{ plots.results.status }}<br>
-Tidsskillnad: {{ plots.results.diff }}<br>
-</div>
-</div>
-
 <div class="graphcolumn">
 {{ plots.plots.splits.render_html|safe}}
 {{ plots.plots.bomsplits.render_html|safe}}
@@ -90,17 +76,26 @@ Tidsskillnad: {{ plots.results.diff }}<br>
 {{ plots.plots.bomtotal.render_html|safe}}
 {{ plots.plots.spread.render_html|safe}}
 </div>
-</div>
 {% else %}
 No splits found for this race
 {% endif %}
 
+       </div>
+        <div class="col-lg-2">
+            <h5>{{ plots.raceinfo.name }} - {{ plots.raceinfo.classname }} - {{ plots.raceinfo.date }}</h5>
+            <p>Placering: {{ plots.results.position }}</p>
+            <p>Tid: {{ plots.results.time }}</p>
+            <p>Status: {{ plots.results.status }}</p>
+            <p>Tidsskillnad: {{ plots.results.diff }}</p>
+        </div>
+    </div>
 
 </div>
-{% endblock content %}
 
-<div id="footer">
-ANd a footer</div>
+
+
+
+{% endblock content %}
 
 </body>
 </html>
