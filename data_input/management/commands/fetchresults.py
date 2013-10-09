@@ -116,7 +116,7 @@ class Command(BaseCommand):
     def update_all_recent_member_data(self):
         members = dbupdate.get_all_members_with_accounts()
         clubmembers = self.eventordata.create_clubmembers(members)
-        self.eventordata.get_recent_races(clubmembers[:2])
+        self.eventordata.get_recent_races(clubmembers)
         self.update_db_races()
         self.eventordata.get_results_of_races()
         self.update_db_results()

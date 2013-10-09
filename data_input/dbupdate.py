@@ -7,7 +7,7 @@ from graphs.models import Event, EventRace, Classrace, PersonRun, \
                         Result, Split 
 from accounts.models import Person, Si
 def get_all_members_with_accounts():
-    return Person.objects.filter(account_status='active')
+    return Person.objects.filter(account_status='new')
 
 def get_members(member_ids=[]):
     return Person.objects.filter(eventor_id__in=member_ids)
