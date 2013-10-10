@@ -14,7 +14,7 @@
     <![endif]-->
   </head>
 
-<body>
+    <body>
     
     <div class="navbar navbar-inverse navbar-static-top">
       <div class="container">
@@ -35,11 +35,11 @@
             <li><a href="/accounts/signup/">ANMÄL</a></li>
         {% else %}
 
-
+        <li><a href="/">HOME</a></li>
         <li><a href="/races">DINA TÄVLINGAR</a></li>
         <li><a href="/about">OM ORIENTALYST</a></li>
+        <li><a href="/profile">DIN PROFIL</a></li>
         <li><a href="/accounts/logout">LOGOUT</a></li>
-        Logged in as {{ user.alias }}
         {% endif %}
           </ul>
         </div><!--/.nav-collapse -->
@@ -47,9 +47,7 @@
     </div>
 
 {% block content %}
-<div id="content">
 
-</div>
 {% endblock content %}
 
 </body>

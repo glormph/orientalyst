@@ -1,0 +1,29 @@
+{% extends "graphs/base.html" %}
+
+
+{% block content %}
+    <div class="container">
+      <div class="col-lg-2">
+      {% block leftcolumn %}
+        {% if user.is_loggedin %}
+        <h4>Senaste tävlingar</h4>
+        {% if not racelist %}
+        <p>Inga tävlingar hittade!</p>
+        {% endif %}
+        {% for race in racelist %}
+            <p><a href="/race/{{ race.cr_id }}">{{ race.name }}</a></p>
+        {% endfor %}
+        {% endif %}
+      {% endblock leftcolumn %}
+      </div>
+      <div class="col-lg-6">
+      {% block centercolumn %}
+      {% endblock centercolumn %}
+      </div>
+      <div class="col-lg-2">
+      {% block rightcolumn %}
+      {% endblock rightcolumn %}
+      </div>
+    </div>
+
+{% endblock content %}
