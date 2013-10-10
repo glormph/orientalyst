@@ -15,8 +15,7 @@ class PlotSet(object):
         else:
             self.showgraphs = True
         self.plots = {}
-        self.show_eids = eventor_id # for testing, sofia anderssons
-                                        #eventorID=2664
+        self.show_eids = eventor_id
     
         self.plots['splits'] = MultiplePointsPerPersonPlot('splittider',
                     racedata.data, self.show_eids, 'splits', None, 'tid (min)', 'kontroll' )
@@ -31,7 +30,7 @@ class PlotSet(object):
                 self.show_eids, 'totalmistakes', 'result', 'tid (min)',
                 'placering')
         self.plots['totaltime'] = SingePointsPerPersonPlot('totaltid', racedata.data,
-                self.show_eids, 'totaltime', 'result', 'tid (min)', 'placering',
+                self.show_eids, 'diff', 'result', 'tid (min)', 'placering',
                 )
 
 class BasePlot(object):

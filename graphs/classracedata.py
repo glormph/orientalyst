@@ -11,14 +11,14 @@ class ClassRaceData(object):
                 result.firstname.encode('utf-8'),
                 result.lastname.encode('utf-8'))
             self.data[eid]['result'] = result.position
-            ttime = result.time.split(':')
-            self.data[eid]['totaltime'] = int(ttime[0]) * 60 + int(ttime[1])
+            self.data[eid]['totaltime'] = self.get_time_in_seconds(result.time)
             splits = [x.splittime for x in Split.objects.filter(result = 
-            result.id).order_by('split_n')]
+                        result.id).order_by('split_n')]
+            self.data[eid]['diff'] = self.get_time_in_seconds(result.diff)
             
             # sometimes no split times in the xml, but splits are included
             try:
-                splits = [int(x.split(':')[0])*60 + int(x.split(':')[1]) for x in splits]
+                splits = [self.get_time_in_seconds(x) for x in splits]
             except ValueError:
                 self.data[eid]['splits'] = []
             else:
@@ -50,7 +50,10 @@ class ClassRaceData(object):
             self.data[eid]['totalmistakes'] = sum(self.data[eid]['mistakes'])
             self.data[eid]['spread'] = self.calculateSpread( \
                     self.data[eid]['legdiffs'])
-
+    
+    def get_time_in_seconds(self, time):
+        return int(time.split(':')[0])*60 + int(time.split(':')[1])
+        
     def getDiffs(self, leg_or_split, times, fastest):
         diffs = []
         for n,time in enumerate(times):
