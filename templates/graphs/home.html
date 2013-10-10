@@ -1,40 +1,17 @@
-{% extends "graphs/base.html" %}
+{% extends "graphs/threecolumns.html" %}
+
+{% block centercolumn %}
+    {% if message %}
+    <p>{{ message }}</p>
+    {% endif %}
+    <h4>Välkommen till Orientalyst!</h4>
+    <p>Här kan du gå igenom dina orienteringsresultat och titta på grafer som visar
+    tävlingsresultat på olika sätt. Resultaterna laddas ned från eventor.se, vilket
+    betyder att bara de resultat som finns där kan visas här.
+    </p>
+{% endblock centercolumn %}
+
+{% block rightcolumn %}
+{% endblock rightcolumn %}
 
 
-{% block content %}
-
-
-    <div class="container">
-      <!-- Example row of columns -->
-      <div class="col-lg-2">
-        {% if user.is_loggedin %}
-        <h4>Senaste tävlingar</h4>
-        {% if not racelist %}
-        <p>Inga tävlingar hittade!</p>
-        {% endif %}
-        {% for race in racelist %}
-            <p><a href="/race/{{ race.cr_id }}">{{ race.name }}</a></p>
-        {% endfor %}
-        {% endif %}
-      </div>
-        <div class="col-lg-6">
-          <h4>Välkommen till Orientalyst!</h4>
-<p>Här kan du gå igenom dina orienteringsresultat och titta på grafer som visar
-tävlingsresultat på olika sätt. Resultaterna laddas ned från eventor.se, vilket
-betyder att bara de resultat som finns där kan visas här.
-</p>
-
-       </div>
-        <div class="col-lg-2">
-        </div>
-    </div>
-
-</div>
-
-
-
-{% if message %}
-<p>{{ message }}</p>
-{% endif %}
-
-{% endblock content %}

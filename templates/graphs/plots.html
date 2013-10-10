@@ -1,6 +1,6 @@
-{% extends "graphs/base.html" %}
+{% extends "graphs/threecolumns.html" %}
 
-{% block content %}
+{% block centercolumn %}
 <script src="/static/d3.v3.min.js"></script>
 <script>
 
@@ -50,39 +50,20 @@ var data = new Array();
 
 </script>
 
-    <div class="container">
-      <!-- Example row of columns -->
-      <div class="col-lg-2">
-        {% if user.is_loggedin %}
-        <h4>Senaste tävlingar</h4>
-        {% if not racelist %}
-        <p>Inga tävlingar hittade!</p>
-        {% endif %}
-        {% for race in racelist %}
-            <p><a href="/race/{{ race.cr_id }}">{{ race.name }}</a></p>
-        {% endfor %}
-        {% endif %}
-      </div>
-        <div class="col-lg-6">
         <h4>Plots</h4>
 {% if plots.showgraphs %}
-<div class="graphcolumn">
 {{ plots.plots.splits.render_html|safe}}
 {{ plots.plots.bomsplits.render_html|safe}}
 {{ plots.plots.behind.render_html|safe}}
 {{ plots.plots.legbehind.render_html|safe}}
-</div>
-<div class="graphcolumn">
 {{ plots.plots.totaltime.render_html|safe}}
 {{ plots.plots.bomtotal.render_html|safe}}
 {{ plots.plots.spread.render_html|safe}}
-</div>
 {% else %}
 No splits found for this race
 {% endif %}
-
-       </div>
-        <div class="col-lg-2">
+{% endblock centercolumn %}
+        {% block rightcolumn %}
             <h4>Resultat</h4>
             <h5>{{ plots.raceinfo.name }}</h5>
             <h5>{{ plots.raceinfo.classname }}</h5>
@@ -91,15 +72,4 @@ No splits found for this race
             <p>Tid: {{ plots.results.time }}</p>
             <p>Status: {{ plots.results.status }}</p>
             <p>Tidsskillnad: {{ plots.results.diff }}</p>
-        </div>
-    </div>
-
-</div>
-
-
-
-
-{% endblock content %}
-
-</body>
-</html>
+        {% endblock rightcolumn %}

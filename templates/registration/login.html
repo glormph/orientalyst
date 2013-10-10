@@ -1,10 +1,7 @@
-{% extends "graphs/base.html" %}
-{% block content %}
-
-    <div class="container">
-      <div class="col-lg-2">
-      </div>
-      <div class="col-lg-6">
+{% extends "graphs/threecolumns.html" %}
+{% block leftcolumn %}
+{% endblock leftcolumn %}
+{% block centercolumn %}
 
 <h4>Login till Orientalyst</h4>
 
@@ -24,7 +21,4 @@ Your username and password didn't match. Please try again.
 </form>
 
 <p><a href="/user/password_reset/">Jag har glömt mitt password</a></p>
-        </div>
-        <div class="col-lg-2">
-      </div>
-{% endblock content %}
+{% endblock centercolumn %}
