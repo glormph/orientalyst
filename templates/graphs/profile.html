@@ -1,6 +1,6 @@
 {% extends "graphs/threecolumns.html" %}
 {% block centercolumn %}
-        <h4>Profil för {{ user.fullname }}</h4>
+        <h3>Profil för {{ user.fullname }}</h3>
         <p>Eventor ID {{ user.get_eventorID}} </p>
         <p>Sportident 
         {% for si in user.get_sportident %}
