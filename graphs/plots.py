@@ -18,26 +18,31 @@ class PlotSet(object):
         self.show_eids = eventor_id
     
         self.plots['splits'] = MultiplePointsPerPersonPlot('splittider',
-                    racedata.data, self.show_eids, 'splits', None, 'tid (min)', 'kontroll' )
-        self.plots['bomsplits'] = MultiplePointsPerPersonPlot('bommar', 
-                racedata.data, self.show_eids, 'mistakes', None, 'tid (min)', 'kontroll')
+        'Splittider', racedata.data, self.show_eids, 'splits', None, 
+        'tid (min)', 'kontroll')
+        self.plots['bomsplits'] = MultiplePointsPerPersonPlot('bommar',
+        'Bommar', racedata.data, self.show_eids, 'mistakes', None, 'tid (min)', 
+        'kontroll')
         self.plots['legbehind'] = MultiplePointsPerPersonPlot('tidskillnader',
-                racedata.data, self.show_eids, 'legdiffs', None, 'tid (min)', 'kontroll')
-        self.plots['spread'] = SingePointsPerPersonPlot('spread', racedata.data,
-                self.show_eids, 'spread', 'result', 'std.avvik. tidskillnad(%)', 'placering',
-                'nottime')
-        self.plots['bomtotal'] = SingePointsPerPersonPlot('bomtotal', racedata.data,
-                self.show_eids, 'totalmistakes', 'result', 'tid (min)',
-                'placering')
-        self.plots['totaltime'] = SingePointsPerPersonPlot('totaltid', racedata.data,
-                self.show_eids, 'diff', 'result', 'tid (min)', 'placering',
+        'Tidsskillnader', racedata.data, self.show_eids, 'legdiffs', None, 
+        'tid (min)', 'kontroll')
+        self.plots['spread'] = SingePointsPerPersonPlot('spread',
+        'Spridning tidsskillnader', racedata.data, self.show_eids, 'spread', 
+        'result', 'std.avvik. tidskillnad(%)', 'placering', 'nottime')
+        self.plots['bomtotal'] = SingePointsPerPersonPlot('bomtotal', 'Total'
+        'bomtid', racedata.data, self.show_eids, 'totalmistakes', 'result',
+        'tid (min)','placering')
+        self.plots['totaltime'] = SingePointsPerPersonPlot('tidefter', 'Tid'
+        ' efter vinnare', racedata.data, self.show_eids, 'diff', 'result', 
+        'tid (min)', 'placering',
                 )
 
 class BasePlot(object):
-    def __init__(self, name, racedata, eid, y, x=None, ylab=None, xlab=None,
+    def __init__(self, name, title, racedata, eid, y, x=None, ylab=None, xlab=None,
                 y_units=None):
         self.highlight = eid
         self.name = name
+        self.title = title
         self.points = []
         self.xlab = xlab
         self.ylab = ylab
@@ -46,7 +51,7 @@ class BasePlot(object):
 
     def base_html(self):
         return """
-        <div class="graph" id="%s"><h5>%s</h5></div>
+        <div class="graph" id="%s"><h4>%s</h4></div>
 <script>
 var width = 500;
 var height = 300;
@@ -57,7 +62,7 @@ height);
 var highlight_eid = "%s";
 var xlab = "%s";
 var ylab = "%s";
-""" % (self.name, self.name, self.name,self.name, self.highlight, self.xlab,
+""" % (self.name, self.title, self.name,self.name, self.highlight, self.xlab,
 self.ylab)
     
     def render_data(self):
@@ -196,8 +201,8 @@ axisGroup.append("text")
         return ticks
 
 class SingePointsPerPersonPlot(BasePlot):
-    def __init__(self, name, racedata, eid, y, x=None, ylab=None, xlab=None, y_units='time'):
-        super(SingePointsPerPersonPlot, self).__init__( name, racedata, eid, y, x, ylab, xlab, y_units)
+    def __init__(self, name, title, racedata, eid, y, x=None, ylab=None, xlab=None, y_units='time'):
+        super(SingePointsPerPersonPlot, self).__init__( name, title, racedata, eid, y, x, ylab, xlab, y_units)
         for pid in racedata:
             self.points.append('{name: "%s", x: %s, y: %s, color: "%s", eid: "%s"}' \
                 % (racedata[pid]['name'].decode('utf-8'), racedata[pid][x], racedata[pid][y],
@@ -207,9 +212,9 @@ class SingePointsPerPersonPlot(BasePlot):
 
 
 class MultiplePointsPerPersonPlot(BasePlot):
-    def __init__(self, name, racedata, eid, y, x=None, ylab=None, xlab=None,
+    def __init__(self, name, title, racedata, eid, y, x=None, ylab=None, xlab=None,
             y_units='time'):
-        super(MultiplePointsPerPersonPlot, self).__init__( name, racedata, eid, y, x, ylab, xlab, y_units)
+        super(MultiplePointsPerPersonPlot, self).__init__( name, title, racedata, eid, y, x, ylab, xlab, y_units)
         points = {}
         for pid in racedata:
             for n,spl in enumerate(racedata[pid][y]):
