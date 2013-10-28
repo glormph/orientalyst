@@ -3,11 +3,10 @@ import classracedata, races
 from graphs.models import Result
 
 class PlotSet(object):
-    def __init__(self, classrace, eventor_id):
+    def __init__(self, classrace, user_evid, friends_evid):
         self.results = Result.objects.get(classrace=classrace.id,
-                person_eventor_id=eventor_id)
+                person_eventor_id=user_evid)
         self.raceinfo = races.Race(classrace)
-
         racedata = classracedata.ClassRaceData(classrace)
         if not racedata.hassplits:
             self.showgraphs = False
@@ -15,40 +14,62 @@ class PlotSet(object):
         else:
             self.showgraphs = True
         self.plots = {}
-        self.show_eids = eventor_id
+
+        self.friends_evids = friends_evid
     
         self.plots['splits'] = MultiplePointsPerPersonPlot('splittider',
-        'Splittider', racedata.data, self.show_eids, 'splits', None, 
+        'Splittider', racedata.data, user_evid, friends_evid, 'splits', None, 
         'tid (min)', 'kontroll')
         self.plots['bomsplits'] = MultiplePointsPerPersonPlot('bommar',
-        'Bommar', racedata.data, self.show_eids, 'mistakes', None, 'tid (min)', 
+        'Bommar', racedata.data, user_evid, friends_evid, 'mistakes', None, 'tid (min)', 
         'kontroll')
         self.plots['legbehind'] = MultiplePointsPerPersonPlot('tidskillnader',
-        'Tidsskillnader', racedata.data, self.show_eids, 'legdiffs', None, 
+        'Tidsskillnader', racedata.data, user_evid, friends_evid, 'legdiffs', None, 
         'tid (min)', 'kontroll')
         self.plots['spread'] = SingePointsPerPersonPlot('spread',
-        'Spridning tidsskillnader', racedata.data, self.show_eids, 'spread', 
+        'Spridning tidsskillnader', racedata.data, user_evid, friends_evid, 'spread', 
         'result', 'std.avvik. tidskillnad(%)', 'placering', 'nottime')
         self.plots['bomtotal'] = SingePointsPerPersonPlot('bomtotal', 'Total'
-        'bomtid', racedata.data, self.show_eids, 'totalmistakes', 'result',
+        'bomtid', racedata.data, user_evid, friends_evid, 'totalmistakes', 'result',
         'tid (min)','placering')
         self.plots['totaltime'] = SingePointsPerPersonPlot('tidefter', 'Tid'
-        ' efter vinnare', racedata.data, self.show_eids, 'diff', 'result', 
+        ' efter vinnare', racedata.data, user_evid, friends_evid, 'diff', 'result', 
         'tid (min)', 'placering',
                 )
 
 class BasePlot(object):
-    def __init__(self, name, title, racedata, eid, y, x=None, ylab=None, xlab=None,
+    def __init__(self, name, title, racedata, user_evid, friends_evid, y, x=None, ylab=None, xlab=None,
                 y_units=None):
-        self.highlight = eid
         self.name = name
         self.title = title
         self.points = []
         self.xlab = xlab
         self.ylab = ylab
         self.y_units = y_units
-
-
+        self.user_evid = user_evid
+        self.friends_evid = friends_evid
+    
+    def get_pointstyle(self, pid):
+        if str(pid)==str(self.user_evid):
+            pointclass = 'userpoint'
+            radius = '5px'
+        elif pid not in [None, ''] and str(pid) in str(self.friends_evid):
+            pointclass = 'friendpoint'
+            radius = '3px'
+        else:
+            pointclass = 'greypoint'
+            radius = '1.5px'
+        return {'pclass': pointclass, 'radius': radius}
+    
+    def render_html(self):
+        html = [self.base_html()]
+        html.append( self.set_ytickmarks() )
+        html.append(self.render_data() )
+        html.append(self.render_points() )
+        html.append(self.render_plot() )
+        html.append(self.close_html() )
+        return '\n'.join(html)
+    
     def base_html(self):
         return """
         <div class="graph" id="%s"><h4>%s</h4></div>
@@ -59,15 +80,14 @@ var padding = 50;
 var plotname = "%s";
 var svg = d3.select("#%s").append("svg:svg").attr("width", width).attr("height",
 height);
-var highlight_eid = "%s";
 var xlab = "%s";
 var ylab = "%s";
-""" % (self.name, self.title, self.name,self.name, self.highlight, self.xlab,
+""" % (self.name, self.title, self.name,self.name, self.xlab,
 self.ylab)
     
     def render_data(self):
-        return """data[plotname] = [ %s
-        ];
+        return """
+        data[plotname] = [ %s ];
     var ymax = %s
     var xmax = d3.max(data[plotname], function(datum) {return datum.x;});
     var x = d3.scale.linear().domain([0, xmax]).range([padding, width-padding]);
@@ -80,11 +100,12 @@ self.ylab)
 svg.selectAll("circle").data(data[plotname]).enter().append("svg:circle")
 .attr("cx", function(d) { return x(d.x); })
 .attr("cy", function(d) { return height - y(d.y);})
-.attr("class", "smallpoints").attr("r", 2)
+.class(function(d) {return d.dataclass;})
+.attr("r", function(d) {return d.rad})
 .attr("id", function(d) { return d.eid+"#"+ "%s"; })
+.on("mouseover", highlight_point)
+.on("mouseout", dehighlight_point)
 
-
-highlight_point(plotname, highlight_eid);
     """ % self.name
     
     def render_plot(self):
@@ -159,15 +180,6 @@ axisGroup.append("text")
         </script>
         """
 
-    def render_html(self):
-        html = [self.base_html()]
-        html.append( self.set_ytickmarks() )
-        html.append(self.render_data() )
-        html.append(self.render_points() )
-        html.append(self.render_plot() )
-        html.append(self.close_html() )
-        return '\n'.join(html)
-    
     def set_ytickmarks(self):
         """Method to determine how tickmarks should be distributed"""
 
@@ -201,27 +213,33 @@ axisGroup.append("text")
         return ticks
 
 class SingePointsPerPersonPlot(BasePlot):
-    def __init__(self, name, title, racedata, eid, y, x=None, ylab=None, xlab=None, y_units='time'):
-        super(SingePointsPerPersonPlot, self).__init__( name, title, racedata, eid, y, x, ylab, xlab, y_units)
+    def __init__(self, name, title, racedata, user_evid, friends_evid, y, x=None, ylab=None, xlab=None, y_units='time'):
+        super(SingePointsPerPersonPlot, self).__init__( name, title, racedata,
+                    user_evid, friends_evid, y, x, ylab, xlab, y_units)
         for pid in racedata:
-            self.points.append('{name: "%s", x: %s, y: %s, color: "%s", eid: "%s"}' \
+            pdata = self.get_pointstyle(pid)
+            self.points.append('{name: "%s", x: %s, y: %s, eid:'
+            '"%s", dataclass:"%s", rad:"%s"}' \
                 % (racedata[pid]['name'].decode('utf-8'), racedata[pid][x], racedata[pid][y],
-                "grey", str(pid)))
+                str(pid), pdata['pclass'], pdata['radius'] ))
          
         self.ymax = math.ceil(max([racedata[x][y] for x in racedata]))
 
 
 class MultiplePointsPerPersonPlot(BasePlot):
-    def __init__(self, name, title, racedata, eid, y, x=None, ylab=None, xlab=None,
+    def __init__(self, name, title, racedata, user_evid, friends_evid, y, x=None, ylab=None, xlab=None,
             y_units='time'):
-        super(MultiplePointsPerPersonPlot, self).__init__( name, title, racedata, eid, y, x, ylab, xlab, y_units)
+        super(MultiplePointsPerPersonPlot, self).__init__( name, title,
+                            racedata, user_evid, friends_evid, y, x, ylab, xlab, y_units)
         points = {}
         for pid in racedata:
             for n,spl in enumerate(racedata[pid][y]):
+                pdata = self.get_pointstyle(pid)
                 if not n in points:
                     points[n] = []
-                points[n].append('{name: "%s", x: %s, y: %s, color: "%s", eid: "%s"}' \
-                % (racedata[pid]['name'], n+1, spl, "grey", str(pid)))
+                points[n].append('{name: "%s", x: %s, y: %s, eid:'
+                '"%s", dataclass: "%s", rad: "%s"}' % (racedata[pid]['name'], 
+                    n+1, spl, str(pid), pdata['pclass'], pdata['radius']))
         
         xpoints = sorted(points.keys())
         self.points = [x for n in xpoints for x in points[n]]
@@ -229,16 +247,14 @@ class MultiplePointsPerPersonPlot(BasePlot):
         self.ymax = math.ceil(max(ymaxlist))
 
     def render_points(self):
-        return """
-
-    // points
-    svg.selectAll("circle").data(data[plotname]).enter().append("svg:circle")
-    .attr("cx", function(datum, index) {
-    return (x(datum.x) + 5 * (index % 3 -1));
-    })
-    .attr("cy", function(datum) { return height - y(datum.y);})
-    .attr("r", 2)
-    .attr("class", "smallpoints");
-
-highlight_point(plotname, highlight_eid);
-    """
+        return ('// points \n'
+                'svg.selectAll("circle").data(data[plotname]).enter().append("svg:circle")'
+                '.attr("cx", function(d, index) { return (x(d.x) + 5 * (index % 3 -1));})'
+                '.attr("cy", function(d) { return height - y(d.y);})'
+                '.attr("r", function(d) {return d.rad})'
+                '.attr("class", function(d) {return d.dataclass;})'
+                '.attr("text", function(d) {return d.name;})'
+                '.on("mouseover", highlight_point)'
+                '.on("mouseout", dehighlight_point);'
+                    )
+                    

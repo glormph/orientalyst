@@ -33,17 +33,30 @@ stroke: #000;
 .smallpoints {
 fill: grey;
 fill-opacity: 0.8;
-stroke-width: 1px;
-stroke:grey;
-stroke-opacity: 0.5;
 }
 
-.highlightpoints {
+.userpoint {
 fill: red;
 fill-opacity: 0.8;
-stroke-width: 1px;
-stroke:grey;
-stroke-opacity: 0.5;
+}
+
+.friendpoint {
+fill: blue;
+fill-opacity: 0.8;
+}
+
+.greypoint {
+fill: grey;
+fill-opacity: 0.8;
+}
+
+.tooltiptext {
+fill: white;
+}
+
+.tooltipbox {
+fill: #000000;
+fill-opacity: 0.5;
 }
 
 text {

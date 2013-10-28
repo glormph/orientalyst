@@ -16,6 +16,11 @@ var data = new Array();
         return filtered;
         }
         
+        d3.selection.prototype.moveToFront = function() {
+            return this.each(function(){
+                this.parentNode.appendChild(this);
+                });
+        };
 
         function plotpoint(newdp, plotnm, classname, size) {
             plotid = "#" + plotnm;
@@ -37,16 +42,50 @@ var data = new Array();
             });
             return dp;
         }
-            
-        highlight_point = function(plotid, eid) {
-            // remove small dots, replace with big dots
-            toremove = filter_eid(plotid, eid);
-            dp = get_datapoints_obj(data[plotid], eid);
-            points = plotpoint(dp, plotid, "highlightpoints", 5);
-            points.attr("onmouseout", "mouseOut(evt)");
-            toremove.remove();
+        
+        highlight_point = function(d) {
+            if (d.dataclass == "friendpoint") {
+                d3.select(this).attr("class", "userpoint");
+                tooltip(this, d);
+            }
         }
 
+        dehighlight_point = function(d) {
+            d3.select(this).attr("class", d.dataclass);
+            remove_tooltip(this);
+            }
+
+        tooltip = function(circle, d) {
+            tipx = circle.cx.animVal.value;
+            tipy = circle.cy.animVal.value - 20;
+            textelement = d3.select(circle.parentNode)
+            .append("text")
+            .text(d.name)
+            .attr("text-anchor", "middle")
+            .attr("class", "tooltiptext")
+            .attr("x", tipx)
+            .attr("y", tipy);
+            
+            bbox = textelement.node().getBBox();
+            d3.select(circle.parentNode)
+            .append("rect")
+            .attr("fill", "green")
+            .attr("class", "tooltipbox")
+            .attr("x", bbox.x-5)
+            .attr("y", bbox.y-5)
+            .attr("width", bbox.width+10)
+            .attr("height", bbox.height+10);
+            
+            textelement.moveToFront();
+            }
+
+
+        remove_tooltip = function(circle) {
+            d3.selectAll(".tooltiptext")
+            .data([]).exit().remove();
+            d3.selectAll(".tooltipbox")
+            .data([]).exit().remove();
+        }
 
 </script>
 

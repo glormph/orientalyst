@@ -104,10 +104,12 @@ def race(request, race_id):
         # get results
         # FIXME which fields need to go to graphing? times, pos, names, clubs?
         cr = Classrace.objects.get(pk=race_id)
-
+        friends = [x.person.eventor_id for x in
+                    PersonRun.objects.filter(classrace=cr).exclude(person=user.person)]
+                    
         # get picked graphs, put results in there, or background parse all possible
         # graphs and let user pick, just show some prioritized in the meantime
-        plotset = plots.PlotSet(cr, user.get_eventorID() )
+        plotset = plots.PlotSet(cr, user.get_eventorID(), friends)
     
         # best would be to only pass results from here once -> let graph module do
         # magic. This would go bad with the one graph - one class thingie though
