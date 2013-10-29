@@ -1,3 +1,5 @@
+# coding=utf-8
+from binascii import hexlify
 import math
 import classracedata, races
 from graphs.models import Result
@@ -78,8 +80,11 @@ var width = 500;
 var height = 300;
 var padding = 50;
 var plotname = "%s";
-var svg = d3.select("#%s").append("svg:svg").attr("width", width).attr("height",
-height);
+var svg = d3.select("#%s")
+.append("svg:svg")
+.attr("width", width)
+.attr("height",height)
+.attr("id", plotname);
 var xlab = "%s";
 var ylab = "%s";
 """ % (self.name, self.title, self.name,self.name, self.xlab,
@@ -102,7 +107,7 @@ svg.selectAll("circle").data(data[plotname]).enter().append("svg:circle")
 .attr("cy", function(d) { return height - y(d.y);})
 .attr("class", function(d) {return d.dataclass;})
 .attr("r", function(d) {return d.rad})
-.attr("id", function(d) { return d.eid+"#"+ "%s"; })
+.attr("id", function(d) { return "%s"+"__"+d.nhex+"__"+d.eid; })
 .on("mouseover", highlight_point)
 .on("mouseout", dehighlight_point)
 
@@ -176,9 +181,14 @@ axisGroup.append("text")
 """
 
     def close_html(self):
-        return """
-        </script>
-        """
+        """Bring user and friend plot points to foreground."""
+        return (
+        'userpoint=d3.selectAll(".userpoint");'
+        'userpoint.moveToFront();'
+        'friendpoints=d3.selectAll(".friendpoint");'
+        'friendpoints.moveToFront();'
+        '</script>'
+        )
 
     def set_ytickmarks(self):
         """Method to determine how tickmarks should be distributed"""
@@ -218,9 +228,11 @@ class SingePointsPerPersonPlot(BasePlot):
                     user_evid, friends_evid, y, x, ylab, xlab, y_units)
         for pid in racedata:
             pdata = self.get_pointstyle(pid)
-            self.points.append('{name: "%s", x: %s, y: %s, eid:'
+            self.points.append('{name: "%s", nhex: "%s", x: %s, y: %s, eid:'
             '"%s", dataclass:"%s", rad:"%s"}' \
-                % (racedata[pid]['name'].decode('utf-8'), racedata[pid][x], racedata[pid][y],
+                % (racedata[pid]['name'].decode('utf-8'), 
+                hexlify(racedata[pid]['name']),
+                racedata[pid][x], racedata[pid][y],
                 str(pid), pdata['pclass'], pdata['radius'] ))
          
         self.ymax = math.ceil(max([racedata[x][y] for x in racedata]))
@@ -237,8 +249,10 @@ class MultiplePointsPerPersonPlot(BasePlot):
                 pdata = self.get_pointstyle(pid)
                 if not n in points:
                     points[n] = []
-                points[n].append('{name: "%s", x: %s, y: %s, eid:'
-                '"%s", dataclass: "%s", rad: "%s"}' % (racedata[pid]['name'], 
+                points[n].append('{name: "%s", nhex: "%s", x: %s, y: %s, eid:'
+                '"%s", dataclass: "%s", rad: "%s"}' %
+                (racedata[pid]['name'].decode('utf-8'),
+                    hexlify(racedata[pid]['name']), 
                     n+1, spl, str(pid), pdata['pclass'], pdata['radius']))
         
         xpoints = sorted(points.keys())
@@ -249,12 +263,13 @@ class MultiplePointsPerPersonPlot(BasePlot):
     def render_points(self):
         return ('// points \n'
                 'svg.selectAll("circle").data(data[plotname]).enter().append("svg:circle")'
-                '.attr("cx", function(d, index) { return (x(d.x) + 5 * (index % 3 -1));})'
+                '.attr("cx", function(d, index) { return (x(d.x) + 5 * (index %% 3 -1));})'
                 '.attr("cy", function(d) { return height - y(d.y);})'
                 '.attr("r", function(d) {return d.rad})'
                 '.attr("class", function(d) {return d.dataclass;})'
                 '.attr("text", function(d) {return d.name;})'
+                '.attr("id", function(d) { return "%s"+"__"+d.nb64+"__"+d.eid; })'
                 '.on("mouseover", highlight_point)'
-                '.on("mouseout", dehighlight_point);'
+                '.on("mouseout", dehighlight_point);' % self.name
                     )
                     

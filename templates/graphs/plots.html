@@ -5,54 +5,32 @@
 <script>
 
 var data = new Array();
-        function filter_eid(plotnm, eid) {
-        // select all circle children of plotid
-        // filter on eid
-        plotid = "#" + plotnm;
-        plot = d3.select(plotid);
-        filtered = plot.selectAll('circle').filter(function(d) {
-            return eid == d.eid;
-            });
-        return filtered;
-        }
-        
         d3.selection.prototype.moveToFront = function() {
             return this.each(function(){
                 this.parentNode.appendChild(this);
                 });
         };
 
-        function plotpoint(newdp, plotnm, classname, size) {
-            plotid = "#" + plotnm;
-            plot = d3.select(plotid);
-            svg = plot.select('svg');
-            alldata = data[plotnm].concat(dp)
-            circle = svg.selectAll("circle").data(alldata);
-            enter = circle.enter().append("circle");
-            enter.attr("cx", function(d) { return x(d.x); })
-                .attr("cy", function(d) { return height - y(d.y);})
-                .attr("class", classname).attr("r", size)
-                .attr("id", function(d) { return d.eid+plotid; });
-            return enter;
-        }
 
-        function get_datapoints_obj(dataset, eid) {
-            dp = dataset.filter(function(d) {
-               return d.eid == eid;
-            });
-            return dp;
-        }
         
         highlight_point = function(d) {
             if (d.dataclass == "friendpoint") {
                 d3.select(this).attr("class", "userpoint");
                 tooltip(this, d);
+                plotid = d3.select(this.parentNode).attr("id");
+                circleid = d3.select(this).attr("id");
+                d3.selectAll("#"+circleid)
+                .attr("r", 7)
+                .attr("class", "highlightpoint");
             }
         }
 
         dehighlight_point = function(d) {
-            d3.select(this).attr("class", d.dataclass);
             remove_tooltip(this);
+            circleid = d3.select(this).attr("id");
+            d3.selectAll("#"+circleid)
+            .attr("r", d.rad)
+            .attr("class", d.dataclass);
             }
 
         tooltip = function(circle, d) {

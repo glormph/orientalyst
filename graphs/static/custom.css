@@ -37,7 +37,7 @@ fill-opacity: 0.8;
 
 .userpoint {
 fill: red;
-fill-opacity: 0.8;
+fill-opacity: 0.9;
 }
 
 .friendpoint {
@@ -48,6 +48,11 @@ fill-opacity: 0.8;
 .greypoint {
 fill: grey;
 fill-opacity: 0.8;
+}
+
+.highlightpoint {
+fill: green;
+fill-opacity: 0.5;
 }
 
 .tooltiptext {
