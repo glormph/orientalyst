@@ -18,6 +18,10 @@ p {
     font-size: 12px;
 }
 
+#competition_info {
+background-color: grey;
+padding: 5px;
+}
 
 .axis path, .axis line {
 fill: none;
@@ -55,14 +59,34 @@ fill: green;
 fill-opacity: 0.5;
 }
 
-.tooltiptext {
+.clickedpoint {
+fill: orange;
+fill-opacity: 0.5;
+}
+
+.legendtext, .tooltiptext {
 fill: white;
 }
 
-.tooltipbox {
+.legendbox, .tooltipbox {
 fill: #000000;
 fill-opacity: 0.5;
 }
+
+.legendelement {
+background-color: rgba(0,0,0, .5);
+padding: 10px;
+color: white;
+}
+
+.legendcircle {
+width: 10px;
+height: 10px;
+-webkit-border-radius: 25px;
+-moz-border-radius: 25px;
+border-radius: 25px; 
+}
+
 
 text {
 font-family: Arial;

@@ -110,7 +110,7 @@ svg.selectAll("circle").data(data[plotname]).enter().append("svg:circle")
 .attr("id", function(d) { return "%s"+"__"+d.nhex+"__"+d.eid; })
 .on("mouseover", highlight_point)
 .on("mouseout", dehighlight_point)
-
+.on("click", click_point);
     """ % self.name
     
     def render_plot(self):
@@ -268,8 +268,9 @@ class MultiplePointsPerPersonPlot(BasePlot):
                 '.attr("r", function(d) {return d.rad})'
                 '.attr("class", function(d) {return d.dataclass;})'
                 '.attr("text", function(d) {return d.name;})'
-                '.attr("id", function(d) { return "%s"+"__"+d.nb64+"__"+d.eid; })'
+                '.attr("id", function(d) { return "%s"+"__"+d.nhex+"__"+d.eid; })'
                 '.on("mouseover", highlight_point)'
-                '.on("mouseout", dehighlight_point);' % self.name
+                '.on("mouseout", dehighlight_point)' 
+                '.on("click", click_point);' % self.name
                     )
                     

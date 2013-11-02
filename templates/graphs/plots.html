@@ -11,18 +11,43 @@ var data = new Array();
                 });
         };
 
-
+        get_all_ids = function(selection) {
+            ids = [];
+            selection.each(function(d) { 
+              ids.push(d3.select(this).attr("id"));
+            });
+          return ids
+        }
         
         highlight_point = function(d) {
             if (d.dataclass == "friendpoint") {
-                d3.select(this).attr("class", "userpoint");
                 tooltip(this, d);
-                plotid = d3.select(this.parentNode).attr("id");
                 circleid = d3.select(this).attr("id");
                 d3.selectAll("#"+circleid)
                 .attr("r", 7)
                 .attr("class", "highlightpoint");
             }
+        }
+        
+        click_point = function(d) {
+            if (d.dataclass == "friendpoint") {
+                circleid = d3.select(this).attr("id");
+                circleid = circleid.split("__");
+                ev_id = circleid[circleid.length - 1];
+                hex_id = circleid[circleid.length - 2];
+                plotids = get_all_ids(d3.selectAll("svg"));
+                for (i=0; i<plotids.length; i++) {
+                  pointid = plotids[i] + "__" + hex_id + "__" + ev_id;
+                  d3.selectAll("#"+pointid)
+                  .attr("r", 7)
+                  .attr("class", "clickedpoint")
+                  .on("mouseover", null)
+                  .on("mouseout", null)
+                  .on("click", null);
+            }
+            legend(d.name, "green");
+
+                }
         }
 
         dehighlight_point = function(d) {
@@ -31,6 +56,33 @@ var data = new Array();
             d3.selectAll("#"+circleid)
             .attr("r", d.rad)
             .attr("class", d.dataclass);
+            }
+        
+        legend = function(name, color) {
+            legsvg = d3.select("#rightcolumn")
+            .append("svg")
+            .attr("height", "30px");
+            text = legsvg.append("text").text(name)
+            .attr("class", "legendtext")
+            .attr("x", 30)
+            .attr("y", 20);
+            bbox = text.node().getBBox();
+            legsvg.append("rect")
+            .attr("class", "legendbox")
+            .attr("x", bbox.x-30)
+            .attr("y", bbox.y-10)
+            .attr("width", bbox.width + 40)
+            .attr("height", bbox.height + 20)
+            ;
+            legcircle = legsvg.append("circle")
+            .attr("class", "clickedpoint")
+            .attr("r", 7)
+            .attr("cx", 14)
+            .attr("cy", 15)
+            .attr("fill", color);
+
+            text.moveToFront();
+            legcircle.moveToFront();
             }
 
         tooltip = function(circle, d) {
@@ -47,7 +99,6 @@ var data = new Array();
             bbox = textelement.node().getBBox();
             d3.select(circle.parentNode)
             .append("rect")
-            .attr("fill", "green")
             .attr("class", "tooltipbox")
             .attr("x", bbox.x-5)
             .attr("y", bbox.y-5)
@@ -83,10 +134,12 @@ No splits found for this race
         {% block rightcolumn %}
             <h3>Tävling</h3>
             <h4>{{ plots.raceinfo.name }}</h4>
+            <div class="competition_info">
             <h5>{{ plots.raceinfo.classname }}</h5>
             <h5>{{ plots.raceinfo.date }}</h5>
             <p>Placering: {{ plots.results.position }}</p>
             <p>Tid: {{ plots.results.time }}</p>
             <p>Status: {{ plots.results.status }}</p>
             <p>Tidsskillnad: {{ plots.results.diff }}</p>
+            </div>
         {% endblock rightcolumn %}
