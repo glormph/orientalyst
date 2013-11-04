@@ -3,6 +3,8 @@
 {% block centercolumn %}
 <script src="/static/d3.v3.min.js"></script>
 <script>
+var colors = ['orange', 'purple', 'green', 'brown'];
+var colorindex = 0;
 
 var data = new Array();
         d3.selection.prototype.moveToFront = function() {
@@ -30,7 +32,9 @@ var data = new Array();
         }
         
         click_point = function(d) {
-            if (d.dataclass == "friendpoint") {
+            if (d.dataclass == "friendpoint" && colorindex<4) {
+                color = colors[colorindex];
+                colorindex += 1;
                 circleid = d3.select(this).attr("id");
                 circleid = circleid.split("__");
                 ev_id = circleid[circleid.length - 1];
@@ -41,15 +45,19 @@ var data = new Array();
                   d3.selectAll("#"+pointid)
                   .attr("r", 7)
                   .attr("class", "clickedpoint")
+                  .attr("fill", color)
                   .on("mouseover", null)
                   .on("mouseout", null)
                   .on("click", null);
-            }
-            legend(d.name, "green");
-
+                  ;
+                  }
+                legend(d.name, color);
                 }
+            }
+        
+        declick_point = function() {
+            
         }
-
         dehighlight_point = function(d) {
             remove_tooltip(this);
             circleid = d3.select(this).attr("id");
