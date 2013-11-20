@@ -82,6 +82,7 @@ var padding = 50;
 var plotname = "%s";
 var svg = d3.select("#%s")
 .append("svg:svg")
+.attr("class", "plot")
 .attr("width", width)
 .attr("height",height)
 .attr("id", plotname);

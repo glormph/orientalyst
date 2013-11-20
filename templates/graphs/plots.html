@@ -51,13 +51,29 @@ var data = new Array();
                   .on("click", null);
                   ;
                   }
-                legend(d.name, color);
+                remove_tooltip(this);
+                legend(d, color);
                 }
             }
         
         declick_point = function() {
-            
+            legend_id = d3.select(this.parentNode).attr("id");
+            point_id = legend_id.substring(1);
+            plotids = get_all_ids(d3.selectAll(".plot"));
+            colorindex -= 1;
+            for (i=0; i<plotids.length; i++) {
+                fullpointid = plotids[i]+"__"+point_id;
+                d3.selectAll("#"+fullpointid)
+                .attr("class", function(d) {return d.dataclass;})
+                .attr("r", function(d) {return d.rad;})
+                .on("mouseover", highlight_point)
+                .on("mouseout", dehighlight_point) 
+                .on("click", click_point)
+                ;
+            }
+            remove_legend(legend_id);
         }
+
         dehighlight_point = function(d) {
             remove_tooltip(this);
             circleid = d3.select(this).attr("id");
@@ -66,11 +82,12 @@ var data = new Array();
             .attr("class", d.dataclass);
             }
         
-        legend = function(name, color) {
+        legend = function(d, color) {
             legsvg = d3.select("#rightcolumn")
             .append("svg")
+            .attr("id", "_"+d.nhex+"__"+d.eid)
             .attr("height", "30px");
-            text = legsvg.append("text").text(name)
+            text = legsvg.append("text").text(d.name)
             .attr("class", "legendtext")
             .attr("x", 30)
             .attr("y", 20);
@@ -87,11 +104,17 @@ var data = new Array();
             .attr("r", 7)
             .attr("cx", 14)
             .attr("cy", 15)
-            .attr("fill", color);
-
+            .attr("fill", color)
+            .on("click", declick_point)
+            ;
             text.moveToFront();
             legcircle.moveToFront();
             }
+
+        remove_legend = function(legend_id) {
+            d3.select("#"+legend_id)
+            .data([]).exit().remove();
+        }
 
         tooltip = function(circle, d) {
             tipx = circle.cx.animVal.value;
