@@ -17,7 +17,7 @@ class EventRace(models.Model):
 
 class Classrace(models.Model):
     eventrace = models.ForeignKey(EventRace)
-    classname = models.CharField(max_length=20)
+    classname = models.CharField(max_length=60)
     racetype = models.CharField(max_length=40)
     
 
