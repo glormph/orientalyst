@@ -249,7 +249,7 @@ def update_splits(classraces): #FIXME
     for sp in splitsindb:
         if sp.result not in splitslookup:
             splitslookup[sp.result] = {}
-        splitslookup[sp.result][sp.split_n] = sp
+        splitslookup[sp.result][str(sp.split_n)] = sp
     for cr in classraces:
         for pid in cr.results:
             for sp in cr.results[pid]['splits']:
