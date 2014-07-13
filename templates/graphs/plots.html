@@ -31,4 +31,10 @@ No splits found for this race
             <p>Tidsskillnad: {{ racedata.results.diff }}</p>
 	    {% endif %}
             </div>
+	    <h3>Kommentarer</h3>
+	    {% for comment in comments %}
+	    <p>{{ comment.commenttext }}</p>
+	    <p>{{ comment.author.firstname }} {{ comment.author.lastname }} 
+	    , {{ comment.created|date:"Y-m-d H:i" }}</p>
+	    {% endfor %}
         {% endblock rightcolumn %}

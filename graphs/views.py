@@ -1,11 +1,12 @@
 from django.http import HttpResponse
-from graphs.models import PersonRun, Classrace, Result, Split
-from accounts.models import Person
-from django.shortcuts import get_object_or_404, get_list_or_404, render, redirect
+from graphs.models import PersonRun, Classrace
+from comments.models import Comment
+from django.shortcuts import render
 from django.http import Http404
 from django.contrib.auth.views import password_reset
 from graphs import plots, races
 from accounts import accounts
+
 
 def check_user_logged_in(request):
     user = accounts.UserChecks(request.user)
@@ -95,7 +96,7 @@ def race(request, race_id):
         return home(request)
     # first check if user has run this race or if race exists
     user = accounts.UserChecks(request.user)
-    racelist = races.RaceList(user)  # deprecate when we have feed
+    racelist = races.RaceList(user)  # deprecate when we have feed?
 
     # get results
     cr = Classrace.objects.get(pk=race_id)
@@ -104,13 +105,14 @@ def race(request, race_id):
         PersonRun.objects.filter(classrace=cr).exclude(person=user.person)]
     plotset = plots.PlotSet(cr, user.get_eventorID(), friends)
     raceresulttext = races.RaceData(cr, user.get_eventorID())  # FIXME ok?
-    # get last 10 races of a competitor
+    comments = Comment.objects.filter(classrace=cr).order_by('created')
     latestraces = racelist.get_latest_races(10)
 
     # graphs to template
     return render(request, 'graphs/plots.html', {
         'plots': plotset,
         'racedata': raceresulttext,
+        'comments': comments,
         'racelist': latestraces,
         'user': user})
 
