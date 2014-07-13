@@ -20,13 +20,15 @@ No splits found for this race
 {% endblock centercolumn %}
         {% block rightcolumn %}
             <h3>Tävling</h3>
-            <h4>{{ plots.raceinfo.name }}</h4>
+            <h4>{{ racedata.info.name }}</h4>
             <div class="competition_info">
-            <h5>{{ plots.raceinfo.classname }}</h5>
-            <h5>{{ plots.raceinfo.date }}</h5>
-            <p>Placering: {{ plots.results.position }}</p>
-            <p>Tid: {{ plots.results.time }}</p>
-            <p>Status: {{ plots.results.status }}</p>
-            <p>Tidsskillnad: {{ plots.results.diff }}</p>
+            <h5>{{ racedata.info.classname }}</h5>
+            <h5>{{ racedata.info.date }}</h5>
+	    {% if racedata.user_has_result %}
+            <p>Placering: {{ racedata.results.position }}</p>
+            <p>Tid: {{ racedata.results.time }}</p>
+            <p>Status: {{ racedata.results.status }}</p>
+            <p>Tidsskillnad: {{ racedata.results.diff }}</p>
+	    {% endif %}
             </div>
         {% endblock rightcolumn %}

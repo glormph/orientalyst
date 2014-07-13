@@ -1,47 +1,55 @@
 # coding=utf-8
 from binascii import hexlify
 import math
-import classracedata, races
-from graphs.models import Result
+import classracedata
+
 
 class PlotSet(object):
     def __init__(self, classrace, user_evid, friends_evid):
-        self.results = Result.objects.get(classrace=classrace.id,
-                person_eventor_id=user_evid)
-        self.raceinfo = races.Race(classrace)
+        # TODO This class should
+        # Get results, verify splits exist
+        # Parse friends from contestants (or should all friend ids be passed?)
+        # Contain plots
         racedata = classracedata.ClassRaceData(classrace)
         if not racedata.hassplits:
             self.showgraphs = False
-            return 
+            return
         else:
             self.showgraphs = True
         self.plots = {}
 
         self.friends_evids = friends_evid
-    
+
         self.plots['splits'] = MultiplePointsPerPersonPlot('splittider',
-        'Splittider', racedata.data, user_evid, friends_evid, 'splits', None, 
-        'tid (min)', 'kontroll')
+                                                           'Splittider',
+                                                           racedata.data,
+                                                           user_evid,
+                                                           friends_evid,
+                                                           'splits',
+                                                           None,
+                                                           'tid (min)',
+                                                           'kontroll')
         self.plots['bomsplits'] = MultiplePointsPerPersonPlot('bommar',
-        'Bommar', racedata.data, user_evid, friends_evid, 'mistakes', None, 'tid (min)', 
+        'Bommar', racedata.data, user_evid, friends_evid, 'mistakes', None, 'tid (min)',
         'kontroll')
         self.plots['legbehind'] = MultiplePointsPerPersonPlot('tidskillnader',
-        'Tidsskillnader', racedata.data, user_evid, friends_evid, 'legdiffs', None, 
+        'Tidsskillnader', racedata.data, user_evid, friends_evid, 'legdiffs', None,
         'tid (min)', 'kontroll')
         self.plots['spread'] = SingePointsPerPersonPlot('spread',
-        'Spridning tidsskillnader', racedata.data, user_evid, friends_evid, 'spread', 
+        'Spridning tidsskillnader', racedata.data, user_evid, friends_evid, 'spread',
         'result', 'std.avvik. tidskillnad(%)', 'placering', 'nottime')
         self.plots['bomtotal'] = SingePointsPerPersonPlot('bomtotal', 'Total'
         'bomtid', racedata.data, user_evid, friends_evid, 'totalmistakes', 'result',
         'tid (min)','placering')
         self.plots['totaltime'] = SingePointsPerPersonPlot('tidefter', 'Tid'
-        ' efter vinnare', racedata.data, user_evid, friends_evid, 'diff', 'result', 
+        ' efter vinnare', racedata.data, user_evid, friends_evid, 'diff', 'result',
         'tid (min)', 'placering',
                 )
 
+
 class BasePlot(object):
-    def __init__(self, name, title, racedata, user_evid, friends_evid, y, x=None, ylab=None, xlab=None,
-                y_units=None):
+    def __init__(self, name, title, racedata, user_evid, friends_evid, y,
+                 x=None, ylab=None, xlab=None, y_units=None):
         self.name = name
         self.title = title
         self.points = []
@@ -50,9 +58,9 @@ class BasePlot(object):
         self.y_units = y_units
         self.user_evid = user_evid
         self.friends_evid = friends_evid
-    
+
     def get_pointstyle(self, pid):
-        if str(pid)==str(self.user_evid):
+        if str(pid) == str(self.user_evid):
             pointclass = 'userpoint'
             radius = '5px'
         elif pid not in [None, ''] and str(pid) in str(self.friends_evid):
@@ -62,7 +70,7 @@ class BasePlot(object):
             pointclass = 'greypoint'
             radius = '1.5px'
         return {'pclass': pointclass, 'radius': radius}
-    
+
     def render_html(self):
         html = [self.base_html()]
         html.append( self.set_ytickmarks() )
@@ -71,7 +79,7 @@ class BasePlot(object):
         html.append(self.render_plot() )
         html.append(self.close_html() )
         return '\n'.join(html)
-    
+
     def base_html(self):
         return """
         <div class="graph" id="%s"><h4>%s</h4></div>
@@ -90,7 +98,7 @@ var xlab = "%s";
 var ylab = "%s";
 """ % (self.name, self.title, self.name,self.name, self.xlab,
 self.ylab)
-    
+
     def render_data(self):
         return """
         data[plotname] = [ %s ];
@@ -99,7 +107,7 @@ self.ylab)
     var x = d3.scale.linear().domain([0, xmax]).range([padding, width-padding]);
     var y = d3.scale.linear().domain([0, ymax]).range([padding, height-padding]);
         """ % (',\n'.join(self.points), self.ymax)
-    
+
     def render_points(self):
         return """
 // points
@@ -113,10 +121,10 @@ svg.selectAll("circle").data(data[plotname]).enter().append("svg:circle")
 .on("mouseout", dehighlight_point)
 .on("click", click_point);
     """ % self.name
-    
+
     def render_plot(self):
         return """
-             
+
 // axes
 var axisGroup = svg.append("g");
 
@@ -200,7 +208,7 @@ axisGroup.append("text")
                 'nottime' : [{'tick': x, 'mark': x } for x in ticks]
                 }
             return ticksout[y_units]
-                
+
         if self.y_units == 'time': # time tickmarks with minutes
             ymax_minutes = int(self.ymax)/60
             if ymax_minutes > 3: # >3 minutes: show whole minutes on ticks
@@ -223,6 +231,7 @@ axisGroup.append("text")
                         'mark').replace('\'', '\"')
         return ticks
 
+
 class SingePointsPerPersonPlot(BasePlot):
     def __init__(self, name, title, racedata, user_evid, friends_evid, y, x=None, ylab=None, xlab=None, y_units='time'):
         super(SingePointsPerPersonPlot, self).__init__( name, title, racedata,
@@ -231,12 +240,12 @@ class SingePointsPerPersonPlot(BasePlot):
             pdata = self.get_pointstyle(pid)
             self.points.append('{name: "%s", nhex: "%s", x: %s, y: %s, eid:'
             '"%s", dataclass:"%s", rad:"%s"}' \
-                % (racedata[pid]['name'].decode('utf-8'), 
+                % (racedata[pid]['name'].decode('utf-8'),
                 hexlify(racedata[pid]['name']),
                 racedata[pid][x], racedata[pid][y],
                 str(pid), pdata['pclass'], pdata['radius'] ))
-         
-        self.ymax = math.ceil(max([racedata[x][y] for x in racedata]))
+
+        self.ymax = math.ceil(max([racedata[xcoo][y] for xcoo in racedata]))
 
 
 class MultiplePointsPerPersonPlot(BasePlot):
@@ -253,12 +262,12 @@ class MultiplePointsPerPersonPlot(BasePlot):
                 points[n].append('{name: "%s", nhex: "%s", x: %s, y: %s, eid:'
                 '"%s", dataclass: "%s", rad: "%s"}' %
                 (racedata[pid]['name'].decode('utf-8'),
-                    hexlify(racedata[pid]['name']), 
+                    hexlify(racedata[pid]['name']),
                     n+1, spl, str(pid), pdata['pclass'], pdata['radius']))
-        
+
         xpoints = sorted(points.keys())
-        self.points = [x for n in xpoints for x in points[n]]
-        ymaxlist = [z for x in racedata for z in racedata[x][y]]
+        self.points = [xcoo for n in xpoints for xcoo in points[n]]
+        ymaxlist = [z for xcoo in racedata for z in racedata[xcoo][y]]
         self.ymax = math.ceil(max(ymaxlist))
 
     def render_points(self):
@@ -271,7 +280,6 @@ class MultiplePointsPerPersonPlot(BasePlot):
                 '.attr("text", function(d) {return d.name;})'
                 '.attr("id", function(d) { return "%s"+"__"+d.nhex+"__"+d.eid; })'
                 '.on("mouseover", highlight_point)'
-                '.on("mouseout", dehighlight_point)' 
+                '.on("mouseout", dehighlight_point)'
                 '.on("click", click_point);' % self.name
                     )
-                    

@@ -90,43 +90,29 @@ def userraces(request):
 
 
 def race(request, race_id):
-    """"Show results for a single race"""
+    """"Show plots, info and comments for a single race"""
     if not check_user_logged_in(request):
         return home(request)
     # first check if user has run this race or if race exists
     user = accounts.UserChecks(request.user)
-    racelist = races.RaceList(user)
+    racelist = races.RaceList(user)  # deprecate when we have feed
 
-    if not user.is_loggedin():
-        plotset = False
-        latestraces = False
-    elif user.has_race(race_id):
-        # get results
-        # FIXME which fields need to go to graphing? times, pos, names, clubs?
-        cr = Classrace.objects.get(pk=race_id)
-        friends = [x.person.eventor_id for x in
-                    PersonRun.objects.filter(classrace=cr).exclude(person=user.person)]
-                    
-        # get picked graphs, put results in there, or background parse all possible
-        # graphs and let user pick, just show some prioritized in the meantime
-        plotset = plots.PlotSet(cr, user.get_eventorID(), friends)
-    
-        # best would be to only pass results from here once -> let graph module do
-        # magic. This would go bad with the one graph - one class thingie though
-
-        # which graphs?
-
-        # get last 10 races of a competitor
-        latestraces = racelist.get_latest_races(10)
-    else:
-        plotset = False
-        # FIXME next stuff is also in other if clause. abstract it into
-        # competitor or something.
-        latestraces = racelist.get_latest_races(10)
+    # get results
+    cr = Classrace.objects.get(pk=race_id)
+    friends = [
+        x.person.eventor_id for x in
+        PersonRun.objects.filter(classrace=cr).exclude(person=user.person)]
+    plotset = plots.PlotSet(cr, user.get_eventorID(), friends)
+    raceresulttext = races.RaceData(cr, user.get_eventorID())  # FIXME ok?
+    # get last 10 races of a competitor
+    latestraces = racelist.get_latest_races(10)
 
     # graphs to template
-    return render(request, 'graphs/plots.html', {'plots' : plotset,
-            'racelist': latestraces, 'user': user})
+    return render(request, 'graphs/plots.html', {
+        'plots': plotset,
+        'racedata': raceresulttext,
+        'racelist': latestraces,
+        'user': user})
 
 
 def multirace(request, race_ids):
