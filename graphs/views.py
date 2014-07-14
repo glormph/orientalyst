@@ -6,6 +6,7 @@ from django.http import Http404
 from django.contrib.auth.views import password_reset
 from graphs import plots, races
 from accounts import accounts
+from comments.models import CommentForm
 
 
 def check_user_logged_in(request):
@@ -97,9 +98,19 @@ def race(request, race_id):
     # first check if user has run this race or if race exists
     user = accounts.UserChecks(request.user)
     racelist = races.RaceList(user)  # deprecate when we have feed?
+    try:
+        cr = Classrace.objects.get(pk=race_id)
+    except Classrace.DoesNotExist:
+        raise Http404
 
-    # get results
-    cr = Classrace.objects.get(pk=race_id)
+    # Post comment if there has been one
+    if request.method == 'POST':
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            newcomment = form.save(commit=False)
+            newcomment.author = user.person
+            newcomment.classrace = cr
+            newcomment.save()
     friends = [
         x.person.eventor_id for x in
         PersonRun.objects.filter(classrace=cr).exclude(person=user.person)]
@@ -114,6 +125,7 @@ def race(request, race_id):
         'racedata': raceresulttext,
         'comments': comments,
         'racelist': latestraces,
+        'user_is_logged_in': user.is_loggedin(),
         'user': user})
 
 

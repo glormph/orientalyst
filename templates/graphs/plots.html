@@ -32,6 +32,15 @@ No splits found for this race
 	    {% endif %}
             </div>
 	    <h3>Kommentarer</h3>
+	    {% if user_is_logged_in %}
+		<form method="post" action="" role="form" class="form-horizontal">
+		{% csrf_token %}
+		<div class="form-group">
+		{{ commentform.as_p }}
+		<button type="submit" value="skicka" class="btn btn-default">Skicka</button>
+		</div>
+		</form>
+	     {% endif %}
 	    {% for comment in comments %}
 	    <p>{{ comment.commenttext }}</p>
 	    <p>{{ comment.author.firstname }} {{ comment.author.lastname }} 
