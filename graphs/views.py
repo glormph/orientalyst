@@ -1,8 +1,7 @@
 from django.http import HttpResponse
 from graphs.models import PersonRun, Classrace
 from comments.models import Comment
-from django.shortcuts import render
-from django.http import Http404
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.views import password_reset
 from graphs import plots, races
 from accounts import accounts
@@ -98,10 +97,7 @@ def race(request, race_id):
     # first check if user has run this race or if race exists
     user = accounts.UserChecks(request.user)
     racelist = races.RaceList(user)  # deprecate when we have feed?
-    try:
-        cr = Classrace.objects.get(pk=race_id)
-    except Classrace.DoesNotExist:
-        raise Http404
+    cr = get_object_or_404(Classrace, pk=race_id)
 
     # Post comment if there has been one
     if request.method == 'POST':
