@@ -5,7 +5,7 @@ from graphs.models import Classrace
 
 
 class Comment(models.Model):
-    commenttext = models.TextField(verbose_name='kommentar')
+    commenttext = models.TextField(verbose_name='Din kommentar')
     author = models.ForeignKey(Person)
     classrace = models.ForeignKey(Classrace)
     created = models.DateTimeField(auto_add_now=True)
