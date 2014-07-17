@@ -47,18 +47,18 @@ def get_events_not_in_db(races):
 def update_newmember_followers(new_members, allcompetitors):
     newfollowers = []
     # new members should automatically follow all clubmembers
+    # new members should get automatic followed by all clubmembers
     for new_competitor in new_members:
         for competitor in allcompetitors:
+            if competitor == new_competitor:
+                continue
             newfollowers.append(
                 Following(followed=competitor.get_django_object(),
                           follower=new_competitor.get_django_object()))
-    # new members should get automatic followed by all clubmembers
-    # FIXME with db message - your club has new member
-    for new_competitor in new_members:
-        for competitor in allcompetitors:
             newfollowers.append(
                 Following(followed=new_competitor.get_django_object(),
                           follower=competitor.get_django_object()))
+    # FIXME with db message - your club has new member
     Following.objects.bulk_create(newfollowers)
 
 
