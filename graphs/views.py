@@ -1,5 +1,6 @@
 from django.http import HttpResponse
-from graphs.models import PersonRun, Classrace
+from graphs.models import Classrace
+from followers.models import Following
 from comments.models import Comment
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.views import password_reset
@@ -107,10 +108,10 @@ def race(request, race_id):
             newcomment.author = user.person
             newcomment.classrace = cr
             newcomment.save()
-    friends = [
-        x.person.eventor_id for x in
-        PersonRun.objects.filter(classrace=cr).exclude(person=user.person)]
-    plotset = plots.PlotSet(cr, user.get_eventorID(), friends)
+    followed_eventor_ids = [
+        x.followed.eventor_id for x in
+        Following.objects.filter(follower=user.person)]
+    plotset = plots.PlotSet(cr, user.get_eventorID(), followed_eventor_ids)
     raceresulttext = races.RaceData(cr, user.get_eventorID())  # FIXME ok?
     comments = Comment.objects.filter(classrace=cr).order_by('created')
     latestraces = racelist.get_latest_races(10)
