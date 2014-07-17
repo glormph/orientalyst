@@ -21,7 +21,7 @@ def front_page(request):
                     latestraces})
 
 def home(request, message=None):
-    """Just show list of classraces -- how many?- and welcome message/news. 
+    """Just show list of classraces -- how many?- and welcome message/news.
     Showing all races may be too much, but at least give an option to show more."""
     # get logged in user
     user = accounts.UserChecks(request.user)

@@ -1,18 +1,17 @@
 # vim: set fileencoding=utf-8 :
-import constants
 from django.core.exceptions import ObjectDoesNotExist
-from django.contrib.auth.models import User
-from django.contrib.auth.forms import PasswordResetForm
-from graphs.models import Event, EventRace, Classrace, PersonRun, \
-                        Result, Split 
+from graphs.models import Event, EventRace, Classrace, PersonRun, Result, Split
 from accounts.models import Person, Si
+from followers.models import Following
+
+
 def get_all_members_with_accounts():
     return Person.objects.filter(account_status='new')
 
 def get_members(member_ids=[]):
     return Person.objects.filter(eventor_id__in=member_ids)
 
-    
+
 def get_old_members(data):
     old_persons = Person.objects.filter(eventor_id__in=[x.eventorID \
                 for x in data.competitors])
@@ -23,7 +22,7 @@ def get_old_members(data):
 
 def get_events_not_in_db(races):
     cr_indb = Classrace.objects.filter(eventrace__eventor_id__in=[int(x) for x in
-            races]).filter(classname__in=[y for x in races.values() 
+            races]).filter(classname__in=[y for x in races.values()
             for y in x])
     erids_indb = {}
     for x in cr_indb:
@@ -31,7 +30,7 @@ def get_events_not_in_db(races):
         if erid not in erids_indb:
             erids_indb[erid] = []
         erids_indb[erid].append(x.classname)
-    
+
     races_not_in_db = []
     for race in [y for x in races.values() for y in x.values()]:
         erid = race.fkeys['eventrace'].eventorID
@@ -44,6 +43,25 @@ def get_events_not_in_db(races):
                 races_not_in_db.append(race)
     return races_not_in_db
 
+
+def update_newmember_followers(new_members, allcompetitors):
+    newfollowers = []
+    # new members should automatically follow all clubmembers
+    for new_competitor in new_members:
+        for competitor in allcompetitors:
+            newfollowers.append(
+                Following(followed=competitor.get_django_object(),
+                          follower=new_competitor.get_django_object()))
+    # new members should get automatic followed by all clubmembers
+    # FIXME with db message - your club has new member
+    for new_competitor in new_members:
+        for competitor in allcompetitors:
+            newfollowers.append(
+                Following(followed=new_competitor.get_django_object(),
+                          follower=competitor.get_django_object()))
+    Following.objects.bulk_create(newfollowers)
+
+
 def update_db_persons(data):
     """Feed downloaded eventor data, db will be updated with persons."""
     new_members, new_persons = [], []
@@ -52,23 +70,27 @@ def update_db_persons(data):
         # Update person table
         if competitor not in old_members:
             person = Person(eventor_id=competitor.eventorID,
-                    firstname=competitor.firstname, lastname=competitor.lastname,
-                    email=competitor.email, account_status='unregistered')
-            person.save() # no need for bulk insert, usually few persons
+                            firstname=competitor.firstname,
+                            lastname=competitor.lastname,
+                            email=competitor.email,
+                            account_status='unregistered')
+            person.save()  # no need for bulk insert, usually few persons
             competitor.attach_django_object(person)
-            new_persons.append( person )
-            new_members.append( competitor )
+            new_persons.append(person)
+            new_members.append(competitor)
         # FIXME also update old members, and check if member leaves club ->
-        # inactive 
-        
+        # inactive
+
         else:
-            competitor.attach_django_object(eventorid_person_lookup[competitor.eventorID])
-        
+            competitor.attach_django_object(eventorid_person_lookup[
+                competitor.eventorID])
+
         # Update SI nr table
         for sinr in competitor.SInrs:
             try:
-                siobj = Si.objects.get(si=int(sinr), 
-                    person_id=competitor.get_django_object() )
+                siobj = Si.objects.get(si=int(sinr),
+                                       person_id=competitor.get_django_object(
+                                       ))
             except ObjectDoesNotExist:
                 # new si nr
                 siobj = Si(si=int(sinr), person=competitor.get_django_object())
@@ -120,7 +142,7 @@ def update_objects_by_eventor_id(data, model, model_attributes,
     old_ids = [x.eventor_id for x in old_objs]
     new_data = {x: data[x] for x in data if int(x) not in \
                 old_ids }
-    
+
     # update old objects
     for obj in old_objs:
         data_obj = data[str(obj.eventor_id)]
@@ -159,14 +181,14 @@ def update_classraces(eventraces, classraces):
     # get classraces in db
     cr_indb = Classrace.objects.filter(eventrace__in=[x for x in
                 eventraces])
-    
+
     # classraces have no eventorid, which is silly. Instead, there is a
     # eventraceid which is an id for all races of a given competition(day). We
     # assume each classname only races once per eventrace.
-    
+
     # first create a dict containing pks for lookup and a tuple of the object and a
     # dict with relevant fields for classrace comparison
-    cr_indb_dict = { x.pk: ( x, {'eventrace': x.eventrace, 
+    cr_indb_dict = { x.pk: ( x, {'eventrace': x.eventrace,
                     'classname': x.classname} ) for x in cr_indb }
     # filter downloaded classraces with/without db entry
     for cr in classraces:
@@ -190,6 +212,7 @@ def update_classraces(eventraces, classraces):
             classrace.save()
             cr.attach_django_object(classrace)
 
+
 def update_results(classraces):
     # get old results from db and make lookup dict
     oldresults = Result.objects.filter(classrace__in=[x.get_django_object() for x \
@@ -208,7 +231,7 @@ def update_results(classraces):
                 oldresult = oldreslookup[cr.get_django_object()][personid]
             except KeyError:
                 newresults.append(generate_db_entry(Result,
-                                    cr.results[personid], 
+                                    cr.results[personid],
                     ['classrace', 'person_eventor_id', 'firstname', 'lastname',
                                         'position', 'time', 'status', 'diff'],
                     ['cr', 'eventorID', 'firstname', 'lastname', 'position', 'time',
@@ -222,7 +245,7 @@ def update_results(classraces):
                                         'position', 'time', 'status', 'diff'])
     # new results: bulk_create, then get result obj and attach to result datas
     if newresults:
-        Result.objects.bulk_create(newresults) 
+        Result.objects.bulk_create(newresults)
         newres_cr = Result.objects.filter(classrace__in=[x.classrace \
                     for x in newresults])
         newres_lookup = {}
@@ -265,7 +288,7 @@ def update_splits(classraces): #FIXME
                     update_db_entry(spobj, sp,
                         ['result', 'split_n', 'splittime'],
                         ['resultobj', 'split_n', 'time'])
-                
+
     # new splits: bulk create
     Split.objects.bulk_create(newsplits)
 
@@ -293,5 +316,5 @@ def update_personruns(classraces, personruns):
             newprs.append(obj)
         else:
             update_db_entry(probj, prun, [], [], ['person', 'classrace'], ['person', 'classrace'])
-    
+
     PersonRun.objects.bulk_create(newprs)

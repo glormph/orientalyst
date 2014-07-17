@@ -3,7 +3,7 @@ import os
 from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
 from data_input import dbupdate, data
-from data_input.models import * 
+from data_input.models import *
 logger = logging.getLogger('data_input')
 
 class Command(BaseCommand):
@@ -12,10 +12,10 @@ class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
         make_option('--persons', '-p', action='store_true', default=False,
         dest='persons'),) + (
-        make_option('--newcompetitor', '-n', type='int', 
+        make_option('--newcompetitor', '-n', type='int',
             default=None, dest='newcompetitor'),) + (
         make_option('--all', '-a', default=False, dest='all',
-                        action="store_true"), ) 
+                        action="store_true"), )
 
     def handle(self, *args, **options):
         logger.info('Running fetchresults')
@@ -26,14 +26,14 @@ class Command(BaseCommand):
             logger.info('Only updating person db table')
             self.update_person_db()
             return
-            
+
         # put PID in db so we get a queue ticket
         mypid = os.getpid()
         this_process = FetchresultsRunning(pid=mypid)
         this_process.save()
-        
+
         # FIXME check if options are ok
-        
+
         # put a ticket in db for download all recent results
         rr_tickets = \
             FetchRecentResultsTickets.objects.filter(is_download_time=True)
@@ -41,7 +41,7 @@ class Command(BaseCommand):
             logger.info('Creating a ticket to fetch all recent results')
             recent_result_ticket = FetchRecentResultsTickets(is_download_time=True)
             recent_result_ticket.save()
-        
+
         # put ticket in db for newcompetitor download
         if options['newcompetitor'] is not None:
             logger.info('Adding ticket for downloading new competitor data')
@@ -54,7 +54,7 @@ class Command(BaseCommand):
             logger.info('Another fetchresults process is running. Aborting.')
             this_process.delete()
             return
-        
+
         # scan db for new persons, download data
         # FIXME this sort of makes the whole 'get events, then results' thing
         # useless. Maybe we should first download per member all events
@@ -96,7 +96,7 @@ class Command(BaseCommand):
         self.eventordata.get_competitors()
         logger.info('Updating db with persons')
         dbupdate.update_db_persons(self.eventordata)
-        
+
     def get_newmember_data(self, members):
         """Gets races for new member, filters out the ones already in db, then
         gets results (splits) for each event not filtered and updates db"""
@@ -120,7 +120,7 @@ class Command(BaseCommand):
         self.update_db_races()
         self.eventordata.get_results_of_races()
         self.update_db_results()
-    
+
     def update_db_races(self):
         logger.info('Updating {0} events'.format(len(self.eventordata.events)))
         events = dbupdate.update_events(self.eventordata.events)

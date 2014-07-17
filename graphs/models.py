@@ -1,6 +1,7 @@
 from django.db import models
 from accounts.models import Person
 
+
 class Event(models.Model):
     name = models.CharField(max_length=100)
     startdate = models.DateField(null=True)
@@ -13,13 +14,13 @@ class EventRace(models.Model):
     startdate = models.DateField(null=True)
     lightcondition = models.CharField(max_length=40)
     name = models.CharField(max_length=200)
-    
+
 
 class Classrace(models.Model):
     eventrace = models.ForeignKey(EventRace)
     classname = models.CharField(max_length=60)
     racetype = models.CharField(max_length=40)
-    
+
 
 class PersonRun(models.Model):
     person = models.ForeignKey(Person)
@@ -43,4 +44,3 @@ class Split(models.Model):
     result = models.ForeignKey(Result)
     split_n = models.IntegerField()
     splittime = models.CharField(max_length=20)
-
