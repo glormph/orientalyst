@@ -6,7 +6,8 @@ from graphs.models import Event, EventRace, Classrace, PersonRun, Result
 from graphs.models import Split
 
 
-serializer = serializers.get_serializer('json')
+JSONserializer = serializers.get_serializer('json')
+serializer = JSONserializer()
 dumpdir = '../dump/stage'
 if not os.path.exists(dumpdir):
     os.makedirs(dumpdir)
@@ -20,7 +21,7 @@ def run_dump(queryset, outdir, outfile):
 class Command(BaseCommand):
     def handle(self, *args, **options):
         # get persons
-        pk_persons = [121, 114]  # Jorrit, Ågren
+        pk_persons = [121, 114]  # Jorrit, Mattias
         test_persons = Person.objects.filter(pk__in=pk_persons)
 
         # dump accounts
