@@ -14,8 +14,8 @@ if not os.path.exists(dumpdir):
 
 
 def run_dump(queryset, outdir, outfile):
-    with open(os.path.join(outdir, outfile)) as fp:
-        serializer.serialize(queryset, stream=fp)
+    with open(os.path.join(outdir, outfile), 'w') as fp:
+        serializer.serialize(queryset, stream=fp, indent=2)
 
 
 class Command(BaseCommand):
