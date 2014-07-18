@@ -7,6 +7,8 @@ from graphs.models import Split
 
 serializer = serializers.get_serializer('json')
 dumpdir = '../dump/stage'
+if not os.path.exists(dumpdir):
+    os.makedirs(dumpdir)
 
 
 def run_dump(queryset, outdir, outfile):
