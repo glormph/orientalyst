@@ -115,12 +115,14 @@ def race(request, race_id):
     raceresulttext = races.RaceData(cr, user.get_eventorID())  # FIXME ok?
     comments = Comment.objects.filter(classrace=cr).order_by('created')
     latestraces = racelist.get_latest_races(10)
+    commentform = CommentForm()
 
     # graphs to template
     return render(request, 'graphs/plots.html', {
         'plots': plotset,
         'racedata': raceresulttext,
         'comments': comments,
+        'commentform': commentform,
         'racelist': latestraces,
         'user_is_logged_in': user.is_loggedin(),
         'user': user})
