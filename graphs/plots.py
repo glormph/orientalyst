@@ -63,7 +63,7 @@ class BasePlot(object):
         if str(pid) == str(self.user_evid):
             pointclass = 'userpoint'
             radius = '5px'
-        elif pid not in [None, ''] and str(pid) in str(self.friends_evid):
+        elif pid not in [None, ''] and str(pid) in [str(x) for x in self.friends_evid]:
             pointclass = 'friendpoint'
             radius = '3px'
         else:
